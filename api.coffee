@@ -9,7 +9,7 @@ module.exports = (fastify, opts, next) ->
       channelManager.addChannel(c)
       reply.send({ "url": c.url })
   )
-  fastify.get("/channel/list", (request, reply) ->
+  fastify.get("/channel", (request, reply) ->
     reply.send(channelManager.listChannel())
   )
   fastify.get("/channel/:cname/", (request, reply) ->
@@ -28,7 +28,7 @@ module.exports = (fastify, opts, next) ->
     catch err
       reply.send(err)
   )
-  fastify.post("/channel/:cname/danmaku/get", (request, reply) ->
+  fastify.post("/channel/:cname/danmaku", (request, reply) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
