@@ -1,30 +1,40 @@
 module.exports = (fastify, opts, next) ->
   { channelManager, Channel, Danmaku } = fastify
-  fastify.post("/channel/create", (request, responce) ->
-    if channelManager.getChannel(request.body.name)?
-      responce.send(new Error("Channel Exists."))
+  fastify.post("/channel/create", (request, reply) ->
+    if channelManager.getChannelByName(request.body.name)?
+      reply.send(new Error("Channel #{request.body.name} Exists"))
     else
-      c = new Channel(request.body.name, request.body.desc)
+      c = new Channel(request.body.name, request.body.desc,
+      request.body.expireTime)
       channelManager.addChannel(c)
-      responce.send({ "url": c.url })
+      reply.send({ "url": c.url })
   )
-  fastify.get("/channel/list", (request, responce) ->
-    responce.send(channelManager.listChannel())
+  fastify.get("/channel/list", (request, reply) ->
+    reply.send(channelManager.listChannel())
   )
-  fastify.get("/channel/:cname/", (request, responce) ->
-    responce.send( channelManager.getChannnel(request.params["cname"]) or \
-    new Error("No Channel #{request.params["cname"]}."))
+  fastify.get("/channel/:cname/", (request, reply) ->
+    try
+      reply.send(channelManager.getChannnel(request.params["cname"]))
+    catch err
+      reply.send(err)
   )
-  fastify.post("/channel/:cname/danmaku/create", (request, responce) ->
-    c = channelManager.getChannel(request.params["cname"])
-    if c?
-      c.pushDanmaku(new Danmaku(request.body)).then(() ->
-        responce.send({ "status": "ok" })
-      ).catch(responce.send)
-    else
-      responce.send(new Error("No Channel #{request.params["cname"]}."))
+  fastify.post("/channel/:cname/danmaku/create", (request, reply) ->
+    try
+      c = channelManager.getChannelByName(request.params["cname"])
+      if not c?
+        throw new Error("Channel #{request.params["cname"]} Not Found")
+      await c.pushDanmaku(new Danmaku(request.body))
+      reply.send({ "status": "ok" })
+    catch err
+      reply.send(err)
   )
-  fastify.get("/channel/:cname/danmaku/get", (request, responce) ->
-
+  fastify.post("/channel/:cname/danmaku/get", (request, reply) ->
+    try
+      c = channelManager.getChannelByName(request.params["cname"])
+      if not c?
+        throw new Error("Channel #{request.params["cname"]} Not Found")
+      reply.send(await c.getDanmakus(request.body["time"]))
+    catch err
+      reply.send(err)
   )
   next()

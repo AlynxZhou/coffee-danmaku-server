@@ -3,7 +3,6 @@ Fastify = require("fastify")
 
 fastify = new Fastify()
 
-
 fastify.register(require("fastify-redis"), {
   host: "127.0.0.1"
 }, (err) ->

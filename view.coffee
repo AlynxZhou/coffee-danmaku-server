@@ -3,59 +3,59 @@ send = require("send")
 
 module.exports = (fastify, opts, next) ->
   { channelManager, Channel, Danmaku } = fastify
-  fastify.get("/", (request, responce) ->
+  fastify.get("/", (request, reply) ->
     nunjucks.render("index.njk",
     {
       "channels": channelManager.listChannel(),
       "createChannel": "/channel/create"
     }, (err, res) ->
       if err
-        responce.send(err)
-      responce.header("Content-Type", "text/html").send(res)
+        reply.send(err)
+      reply.header("Content-Type", "text/html").send(res)
     )
   )
-  fastify.get("/index*", (request, responce) ->
+  fastify.get("/index*", (request, reply) ->
     nunjucks.render("index.njk",
     {
       "channels": channelManager.listChannel(),
       "createChannel": "/channel/create"
     }, (err, res) ->
       if err
-        responce.send(err)
-      responce.header("Content-Type", "text/html").send(res)
+        reply.send(err)
+      reply.header("Content-Type", "text/html").send(res)
     )
   )
-  fastify.get("/channel/create", (request, responce) ->
+  fastify.get("/channel/create", (request, reply) ->
     nunjucks.render("create-channel.njk",
     { "apiCreateChannel": "/api/channel/create" }, (err, res) ->
       if err
-        responce.send(err)
-      responce.header("Content-Type", "text/html").send(res)
+        reply.send(err)
+      reply.header("Content-Type", "text/html").send(res)
     )
   )
-  fastify.get("/channel/:cname", (request, responce) ->
+  fastify.get("/channel/:cname", (request, reply) ->
     cname = request.params["cname"]
     nunjucks.render("channel.njk",
     {
-      "channel": channelManager.getChannel(cname),
+      "channel": channelManager.getChannelByName(cname),
       "apiCreateDanmaaku": "/api/channel/#{cname}/danmaku/create"
     }, (err, res) ->
       if err
-        responce.send(err)
-      responce.header("Content-Type", "text/html").send(res)
+        reply.send(err)
+      reply.header("Content-Type", "text/html").send(res)
     )
   )
-  fastify.get("/test", (request, responce) ->
-    responce.send({ "test": true })
+  fastify.get("/test", (request, reply) ->
+    reply.send({ "test": true })
   )
-  fastify.get("/*", (request, responce) ->
+  fastify.get("/*", (request, reply) ->
     sendStream = send(request.req, request.params["*"])
     sendStream.on("error", (err) ->
       if err.status is 404
-        responce.notFound()
+        reply.notFound()
       else
-        responce.send(err)
+        reply.send(err)
     )
-    sendStream.pipe(responce.res)
+    sendStream.pipe(reply.res)
   )
   next()
