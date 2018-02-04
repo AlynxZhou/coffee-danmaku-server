@@ -12,9 +12,12 @@ module.exports = (fastify, opts, next) ->
   fastify.get("/channel", (request, reply) ->
     reply.send(channelManager.listChannel())
   )
-  fastify.get("/channel/:cname/", (request, reply) ->
+  fastify.get("/channel/:cname", (request, reply) ->
     try
-      reply.send(channelManager.getChannnel(request.params["cname"]))
+      c = channelManager.getChannelByName(request.params["cname"])
+      if not c?
+        throw new Error("Channel #{request.params["cname"]} Not Found")
+      reply.send(c.toValue())
     catch err
       reply.send(err)
   )
@@ -33,7 +36,9 @@ module.exports = (fastify, opts, next) ->
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
         throw new Error("Channel #{request.params["cname"]} Not Found")
-      reply.send(await c.getDanmakus(request.body["time"]))
+      dmkStrs = await c.getDanmakus(request.body["time"])
+      dmks = (JSON.parse(s) for s in dmkStrs)
+      reply.send(dmks)
     catch err
       reply.send(err)
   )

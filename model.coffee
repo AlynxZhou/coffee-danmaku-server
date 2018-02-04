@@ -44,6 +44,15 @@ module.exports = fp((fastify, opts, next) ->
       @url = "/channel/#{@name}"
       @channelKey = "channel_#{@name}"
 
+    toValue: () =>
+      return {
+        "name": @name,
+        "desc": @desc,
+        "expireTime": @expireTime,
+        "isOpen": @isOpen,
+        "url": @url
+      }
+
     isExpired: () =>
       if @expireTime? and Date.now() > @expireTime
         return true
@@ -79,7 +88,10 @@ module.exports = fp((fastify, opts, next) ->
 
     listChannel: () =>
       @cleanChannels()
-      return Object.values(@channels)
+      res = []
+      for k, v of @channels
+        res.push(v.toValue())
+      return res
 
   fastify.decorate("channelManager", new ChannelManager())
   fastify.decorate("Channel", Channel)

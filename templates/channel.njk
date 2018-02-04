@@ -135,7 +135,7 @@ $(document).ready(function() {
             // "X-GDANMAKU-AUTH-KEY": this.pub_passwd,
             // "X-GDANMAKU-TOKEN": "WEB:" + this.token
           },
-          url: "{{ apiCreateDanmaaku }}",
+          url: "{{ apiCreateDanmaku }}",
           data: data,
           success: function(data) {
             // channelVue.token = data.token;
@@ -166,6 +166,127 @@ $(document).ready(function() {
     }
   });
 
+  var winHeight = $(window).height();
+  var winWidth = $(window).width();
+  var danmakus = [];
+  var fixedSlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
+  var flySlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
+  var pollOffset = Date.now();
+  function pollDanmakus() {
+    $.ajax({
+      type: "POST",
+      dataType: "json",
+      headers: {
+        "Content-Type": "application/json",
+        // "X-GDANMAKU-AUTH-KEY": this.pub_passwd,
+        // "X-GDANMAKU-TOKEN": "WEB:" + this.token
+      },
+      url: "/api/channel/{{ channel.name }}/danmaku",
+      data: JSON.stringify({
+        "time": pollOffset
+      }),
+      success: function (data) {
+        danmakus = danmakus.concat(data);
+      }
+    });
+  }
+  function colorRGBA(color) {
+    if (color === "red") {
+      return "rgba(255, 0, 0, 255)";
+    } else if (color === "green") {
+      return "rgba(0, 255, 0, 255)";
+    } else if (color === "blue") {
+      return "rgba(0, 0, 255, 255)";
+    } else {
+      return "rgba(0, 0, 0, 255)";
+    }
+  }
+  function createDom(dmk, i) {
+    var jqueryDom = $("<div class='danmaku' style='white-space:nowrap;'>" + dmk.content + "</div>");
+    var fontColor = colorRGBA(dmk.color);
+    var fontSize = winHeight / 14 + "px";
+    var left = winWidth + "px";
+    var top = i * winHeight / 14 +  "px";
+    // top = parseInt(top) > 352 ? "352px" : top;
+    jqueryDom.css({
+        "position": 'absolute',
+        "color": fontColor,
+        "font-size": fontSize,
+        "left": left,
+        "top": top
+    });
+    $("body").append(jqueryDom);
+    return jqueryDom;
+  }
+  function allocDanmakus() {
+    if (danmakus.length === 0) {
+      return;
+    }
+    if (danmakus[0].time > pollOffset) {
+      pollOffset = danmakus[0].time + 1;
+    }
+    if (danmakus[0].position === "top") {
+      for (var i = 0; i < fixedSlots.length; ++i) {
+        if (fixedSlots[i] === null) {
+          fixedSlots[i] = {
+            "dom": createDom(danmakus.shift(), i),
+            "liveCount": 0
+          };
+          fixedSlots[i].dom.css({ "left": winWidth / 2 - fixedSlots[i].dom.width() / 2 + "px"})
+          break;
+        }
+      }
+    } else if (danmakus[0].position === "bottom") {
+      for (var i = fixedSlots.length - 1; i >= 0; --i) {
+        if (fixedSlots[i] === null) {
+          fixedSlots[i] = {
+            "dom": createDom(danmakus.shift(), i),
+            "liveCount": 0
+          };
+          fixedSlots[i].dom.css({ "left": winWidth / 2 - fixedSlots[i].dom.width() / 2 + "px"})
+          break;
+        }
+      }
+    } else if (danmakus[0].position === "fly") {
+      for (var i = 0; i < flySlots.length; ++i) {
+        if (flySlots[i] === null) {
+          flySlots[i] = {
+            "dom": createDom(danmakus.shift(), i)
+          };
+          flySlots[i].dom.animate({ left: (-1 - flySlots[i].dom.width()) + "px" }, 10000);
+          break;
+        }
+      }
+    }
+  }
+  function removeDanmakus() {
+    for (var i = 0; i < fixedSlots.length; ++i) {
+      if (fixedSlots[i] === null) {
+        continue;
+      }
+      ++fixedSlots[i].liveCount;
+      if (fixedSlots[i].liveCount > 10) {
+        fixedSlots[i].dom.remove();
+        fixedSlots[i] = null;
+      }
+    }
+    for (var i = 0; i < flySlots.length; ++i) {
+      if (flySlots[i] === null) {
+        continue;
+      }
+      if (flySlots[i].dom.width() + flySlots[i].dom.offset().left <= 0) {
+        flySlots[i].dom.remove();
+        flySlots[i] = null;
+      }
+    }
+  }
+  setInterval(function () {
+    winHeight = $(window).height();
+    winWidth = $(window).width();
+    pollDanmakus();
+    removeDanmakus();
+  }, 1000);
+  setInterval(allocDanmakus, 300);
 });
 
 </script>

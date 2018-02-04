@@ -38,7 +38,7 @@ module.exports = (fastify, opts, next) ->
     nunjucks.render("channel.njk",
     {
       "channel": channelManager.getChannelByName(cname),
-      "apiCreateDanmaaku": "/api/channel/#{cname}/danmaku/create"
+      "apiCreateDanmaku": "/api/channel/#{cname}/danmaku/create"
     }, (err, res) ->
       if err
         reply.send(err)
