@@ -169,8 +169,8 @@ $(document).ready(function() {
   var winHeight = $(window).height();
   var winWidth = $(window).width();
   var danmakus = [];
-  var fixedSlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
-  var flySlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
+  var fixedSlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null,null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
+  var flySlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null,null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
   var pollOffset = Date.now();
   function pollDanmakus() {
     $.ajax({
@@ -204,9 +204,9 @@ $(document).ready(function() {
   function createDom(dmk, i) {
     var jqueryDom = $("<div class='danmaku' style='white-space:nowrap;'>" + dmk.content + "</div>");
     var fontColor = colorRGBA(dmk.color);
-    var fontSize = winHeight / 14 + "px";
+    var fontSize = winHeight / 30 + "px";
     var left = winWidth + "px";
-    var top = i * winHeight / 14 +  "px";
+    var top = i * winHeight / 30 +  "px";
     // top = parseInt(top) > 352 ? "352px" : top;
     jqueryDom.css({
         "position": 'absolute',

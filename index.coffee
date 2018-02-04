@@ -13,4 +13,4 @@ fastify.register(require("./model"))
 fastify.register(require("./view"))
 fastify.register(require("./api"), { "prefix": "/api" })
 
-fastify.listen(2333)
+fastify.listen(2333, "0.0.0.0")
