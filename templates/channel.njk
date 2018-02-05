@@ -1,9 +1,10 @@
 {% extends "base.njk" %}
-{% block title %}{{ channel.aaa }}{% endblock %}
+{% block title %}{{ channel.name }}{% endblock %}
 
 {% block body %}
 <div class="row" id="danmaku-channel">
   <div class="col-md-8 col-md-offset-2">
+    <h1>{{ channel.name }}</h1>
     <h2>{{ channel.desc }}</h2>
     {# {% if not channel.is_open and not passwd %}
     <form class="form-inline" role="form" @submit="set_passwd" v-show="!pub_passwd">
@@ -32,8 +33,8 @@
           <script type="text/javascript">new QRCode(document.getElementById("qrcode"), document.URL);</script>
         </li>
       </ul>
-    </div>
-    <div id="token">{{token}}</div> #}
+    </div> #}
+    {# <div id="token">{{ token }}</div> #}
 
     {# danmaku form #}
     <form @submit="post_danmaku">
@@ -53,7 +54,7 @@
       </div>
 
       <div class="form-group" id="color-selection">
-        <label for="style">弹幕颜色}</label>
+        <label for="style">弹幕颜色</label>
         <div>
           <label class="radio-inline">
             <input type="radio" name="style" value="white" v-model="color" checked>
@@ -89,7 +90,10 @@
           </label>
         </div>
       </div>
-
+      <div class="form-group">
+        <label for="password" class="control-label">频道密码</label>
+        <input autocomplete="off" type="password" class="form-control" id="password" v-model="password" name="password" placeholder="频道密码（如果有）">
+      </div>
       <div class="form-group">
         <label for="danmaku">弹幕内容</label>
         <input type="text" class="form-control" name="content" autocomplete="off" v-model="content" placeholder="在这里发射弹幕">
@@ -106,6 +110,7 @@
 <script type="text/javascript">
 
 $(document).ready(function() {
+  // var token = $("#token").remove().text();
   var channelVue = new Vue({
     el: "#danmaku-channel",
     data: {
@@ -113,8 +118,9 @@ $(document).ready(function() {
       position: "fly",
       color: "white",
       error_msg: "",
-      pub_passwd_buf: "",
-      pub_passwd: "{{passwd}}",
+      password: "",
+      // pub_passwd_buf: "",
+      // pub_passwd: "{{passwd}}",
       // token: $("#token").remove().text(),
       disabled: false
     },
@@ -132,8 +138,8 @@ $(document).ready(function() {
           dataType: "json",
           headers: {
             "Content-Type": "application/json",
-            // "X-GDANMAKU-AUTH-KEY": this.pub_passwd,
-            // "X-GDANMAKU-TOKEN": "WEB:" + this.token
+            "X-DANMAKU-AUTH-KEY": $("#password").val()
+            // "X-DANMAKU-TOKEN": token
           },
           url: "{{ apiCreateDanmaku }}",
           data: data,
@@ -155,10 +161,6 @@ $(document).ready(function() {
             }
           }
         });
-      }, // post_danmaku
-      set_passwd: function(ev) {
-        ev.preventDefault();
-        this.pub_passwd = this.pub_passwd_buf;
       },
       show_error: function(msg) {
         this.error_msg = msg;
@@ -169,51 +171,54 @@ $(document).ready(function() {
   var winHeight = $(window).height();
   var winWidth = $(window).width();
   var danmakus = [];
-  var fixedSlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null,null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
-  var flySlots = [ null, null, null, null, null, null, null, null, null, null, null, null, null, null,null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null ];
+  var slotLength = 30;
+  var fixedSlots = [];
+  var flySlots = [];
+  for (var i = 0; i < slotLength; ++i) {
+    fixedSlots.push(null);
+    flySlots.push(null);
+  }
   var pollOffset = Date.now();
   function pollDanmakus() {
     $.ajax({
-      type: "POST",
-      dataType: "json",
+      type: "GET",
       headers: {
         "Content-Type": "application/json",
-        // "X-GDANMAKU-AUTH-KEY": this.pub_passwd,
+        "X-DANMAKU-AUTH-KEY": $("#password").val()
         // "X-GDANMAKU-TOKEN": "WEB:" + this.token
       },
-      url: "/api/channel/{{ channel.name }}/danmaku",
-      data: JSON.stringify({
-        "time": pollOffset
-      }),
+      url: "/api/channel/{{ channel.name }}/danmaku?time=" + pollOffset,
       success: function (data) {
         danmakus = danmakus.concat(data);
       }
     });
   }
-  function colorRGBA(color) {
-    if (color === "red") {
-      return "rgba(255, 0, 0, 255)";
-    } else if (color === "green") {
-      return "rgba(0, 255, 0, 255)";
-    } else if (color === "blue") {
-      return "rgba(0, 0, 255, 255)";
-    } else {
-      return "rgba(0, 0, 0, 255)";
-    }
+  var colorRGBA = {
+    "red": "rgba(255, 0, 0, 255)",
+    "green": "rgba(0, 255, 0, 255)",
+    "blue": "rgba(0, 0, 255, 255)",
+    "white": "rgba(255, 255, 255, 255)",
+    "yellow": "rgba(255, 255, 0, 255)",
+    "cyan": "rgba(0, 255, 255, 255)",
+    "purple": "rgba(128, 0, 128, 255)",
+    "black": "rgba(0, 0, 0, 255)"
   }
   function createDom(dmk, i) {
-    var jqueryDom = $("<div class='danmaku' style='white-space:nowrap;'>" + dmk.content + "</div>");
-    var fontColor = colorRGBA(dmk.color);
-    var fontSize = winHeight / 30 + "px";
+    var jqueryDom = $("<div class='danmaku'>" + dmk.content + "</div>");
+    var fontColor = colorRGBA[dmk.color];
+    var fontSize = winHeight / slotLength + "px";
     var left = winWidth + "px";
-    var top = i * winHeight / 30 +  "px";
-    // top = parseInt(top) > 352 ? "352px" : top;
+    var top = i * winHeight / slotLength +  "px";
     jqueryDom.css({
+        "white-space": "nowrap",
         "position": 'absolute',
         "color": fontColor,
         "font-size": fontSize,
         "left": left,
-        "top": top
+        "top": top,
+        // "-webkit-text-stroke": "1px black",
+        // "text-stroke": "1px black",
+        "text-shadow": "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
     });
     $("body").append(jqueryDom);
     return jqueryDom;
@@ -226,7 +231,7 @@ $(document).ready(function() {
       pollOffset = danmakus[0].time + 1;
     }
     if (danmakus[0].position === "top") {
-      for (var i = 0; i < fixedSlots.length; ++i) {
+      for (var i = 0; i < slotLength; ++i) {
         if (fixedSlots[i] === null) {
           fixedSlots[i] = {
             "dom": createDom(danmakus.shift(), i),
@@ -237,7 +242,7 @@ $(document).ready(function() {
         }
       }
     } else if (danmakus[0].position === "bottom") {
-      for (var i = fixedSlots.length - 1; i >= 0; --i) {
+      for (var i = slotLength - 1; i >= 0; --i) {
         if (fixedSlots[i] === null) {
           fixedSlots[i] = {
             "dom": createDom(danmakus.shift(), i),
@@ -248,7 +253,7 @@ $(document).ready(function() {
         }
       }
     } else if (danmakus[0].position === "fly") {
-      for (var i = 0; i < flySlots.length; ++i) {
+      for (var i = 0; i < slotLength; ++i) {
         if (flySlots[i] === null) {
           flySlots[i] = {
             "dom": createDom(danmakus.shift(), i)
@@ -260,7 +265,7 @@ $(document).ready(function() {
     }
   }
   function removeDanmakus() {
-    for (var i = 0; i < fixedSlots.length; ++i) {
+    for (var i = 0; i < slotLength; ++i) {
       if (fixedSlots[i] === null) {
         continue;
       }
@@ -270,7 +275,7 @@ $(document).ready(function() {
         fixedSlots[i] = null;
       }
     }
-    for (var i = 0; i < flySlots.length; ++i) {
+    for (var i = 0; i < slotLength; ++i) {
       if (flySlots[i] === null) {
         continue;
       }

@@ -27,7 +27,7 @@ module.exports = (fastify, opts, next) ->
   )
   fastify.get("/channel/create", (request, reply) ->
     nunjucks.render("create-channel.njk",
-    { "apiCreateChannel": "/api/channel/create" }, (err, res) ->
+    { "apiCreateChannel": "/api/channel" }, (err, res) ->
       if err
         reply.send(err)
       reply.header("Content-Type", "text/html").send(res)
@@ -35,10 +35,13 @@ module.exports = (fastify, opts, next) ->
   )
   fastify.get("/channel/:cname", (request, reply) ->
     cname = request.params["cname"]
+    c = channelManager.getChannelByName(cname)
+    if c?
+      c = c.toValue()
     nunjucks.render("channel.njk",
     {
-      "channel": channelManager.getChannelByName(cname),
-      "apiCreateDanmaku": "/api/channel/#{cname}/danmaku/create"
+      "channel": c,
+      "apiCreateDanmaku": "/api/channel/#{cname}/danmaku"
     }, (err, res) ->
       if err
         reply.send(err)

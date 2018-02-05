@@ -35,14 +35,17 @@ module.exports = fp((fastify, opts, next) ->
         @time = obj["time"]
 
   class Channel
-    constructor: (name, desc, expireTime = null, isOpen = true) ->
+    constructor: (name, desc, expireTime = null,
+    isOpen = true, password = null) ->
       @redis = redis
       @name = name
       @desc = desc
       @expireTime = expireTime
       @isOpen = isOpen
+      @password = password
       @url = "/channel/#{@name}"
       @channelKey = "channel_#{@name}"
+      @ipTime = {}
 
     toValue: () =>
       return {
