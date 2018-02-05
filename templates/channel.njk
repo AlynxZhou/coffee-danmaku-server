@@ -128,11 +128,11 @@ $(document).ready(function() {
       post_danmaku: function (ev) {
         ev.preventDefault();
         this.disabled = true;
-        if (this.content.length === 0) {
+        if (this.content.trim().length === 0) {
           return;
         }
         var data = JSON.stringify({
-          content: this.content,
+          content: this.content.trim(),
           color: this.color,
           position: this.position
         });
