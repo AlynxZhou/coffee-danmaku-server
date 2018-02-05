@@ -42,7 +42,8 @@ module.exports = (fastify, opts, next) ->
       else
         if Date.now() - c.ipTime[ip] > 1 * 1000
           c.ipTime[ip] = Date.now()
-          await c.pushDanmaku(new Danmaku(request.body))
+          if request.body["content"].length is 0 or (not request.body["time"]?)
+            await c.pushDanmaku(new Danmaku(request.body))
           reply.send({ "status": "ok" })
         else
           reply.send({ "status": "Too fast!" })

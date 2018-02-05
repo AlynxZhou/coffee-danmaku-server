@@ -17,6 +17,8 @@ module.exports = fp((fastify, opts, next) ->
         @position = content["position"]
       else if content instanceof String
         @fromString(content)
+      if @content.length > 234
+        @content = @content.substring(0, 234)
 
     toString: () =>
       return JSON.stringify({

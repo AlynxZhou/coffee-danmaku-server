@@ -125,9 +125,12 @@ $(document).ready(function() {
       disabled: false
     },
     methods: {
-      post_danmaku: function(ev){
+      post_danmaku: function (ev) {
         ev.preventDefault();
         this.disabled = true;
+        if (this.content.length === 0) {
+          return;
+        }
         var data = JSON.stringify({
           content: this.content,
           color: this.color,
@@ -171,6 +174,10 @@ $(document).ready(function() {
   var winHeight = $(window).height();
   var winWidth = $(window).width();
   var danmakus = [];
+  var pollOffset = Date.now();
+  var animateInterval = 10000;
+  var pollInterval = 1000;
+  var allocInterval = 500;
   var slotLength = 30;
   var fixedSlots = [];
   var flySlots = [];
@@ -178,7 +185,6 @@ $(document).ready(function() {
     fixedSlots.push(null);
     flySlots.push([]);
   }
-  var pollOffset = Date.now();
   function pollDanmakus() {
     $.ajax({
       type: "GET",
@@ -190,6 +196,11 @@ $(document).ready(function() {
       url: "/api/channel/{{ channel.name }}/danmaku?time=" + pollOffset,
       success: function (data) {
         danmakus = danmakus.concat(data);
+        for (var i = 0; i < danmakus.length; ++i) {
+          if (danmakus[i]["time"] > pollOffset) {
+            pollOffset = danmakus[i]["time"] + 1;
+          }
+        }
       }
     });
   }
@@ -204,22 +215,25 @@ $(document).ready(function() {
     "black": "rgba(0, 0, 0, 255)"
   }
   function createDom(dmk, i) {
-    var jqueryDom = $("<div class='danmaku'>" + dmk.content + "</div>");
-    var fontColor = colorRGBA[dmk.color];
+    var jqueryDom = $("<div class='danmaku'>" + dmk["content"] + "</div>");
+    var fontColor = colorRGBA[dmk["color"]];
     var fontSize = winHeight / slotLength + "px";
     var left = winWidth + "px";
     var top = i * winHeight / slotLength +  "px";
-    jqueryDom.css({
-        "white-space": "nowrap",
-        "position": 'absolute',
-        "color": fontColor,
-        "font-size": fontSize,
-        "left": left,
-        "top": top,
-        // "-webkit-text-stroke": "1px black",
-        // "text-stroke": "1px black",
-        "text-shadow": "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
-    });
+    var css = {
+      "white-space": "nowrap",
+      "position": 'absolute',
+      "color": fontColor,
+      "font-size": fontSize,
+      "left": left,
+      "top": top
+      // "-webkit-text-stroke": "1px black",
+      // "text-stroke": "1px black",
+    }
+    if (dmk["color"] === "white" || dmk["color"] === "yellow" || dmk["color"] === "cyan" || dmk["color"] === "green") {
+      css["text-shadow"] = "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
+    }
+    jqueryDom.css(css);
     $("body").append(jqueryDom);
     return jqueryDom;
   }
@@ -227,17 +241,14 @@ $(document).ready(function() {
     if (danmakus.length === 0) {
       return;
     }
-    if (danmakus[0].time > pollOffset) {
-      pollOffset = danmakus[0].time + 1;
-    }
-    if (danmakus[0].position === "top") {
+    if (danmakus[0]["position"] === "top") {
       for (var i = 0; i < slotLength; ++i) {
         if (fixedSlots[i] === null) {
           fixedSlots[i] = {
             "dom": createDom(danmakus.shift(), i),
             "liveCount": 0
           };
-          fixedSlots[i].dom.css({ "left": winWidth / 2 - fixedSlots[i].dom.width() / 2 + "px"})
+          fixedSlots[i]["dom"].css({ "left": winWidth / 2 - fixedSlots[i]["dom"].width() / 2 + "px"})
           break;
         }
       }
@@ -248,7 +259,7 @@ $(document).ready(function() {
             "dom": createDom(danmakus.shift(), i),
             "liveCount": 0
           };
-          fixedSlots[i].dom.css({ "left": winWidth / 2 - fixedSlots[i].dom.width() / 2 + "px"})
+          fixedSlots[i]["dom"].css({ "left": winWidth / 2 - fixedSlots[i]["dom"].width() / 2 + "px"})
           break;
         }
       }
@@ -256,7 +267,7 @@ $(document).ready(function() {
       for (var i = 0; i < slotLength; ++i) {
         var allAway = true;
         for (var j = 0; j < flySlots[i].length; ++j) {
-          if (flySlots[i][j].dom.width() + flySlots[i][j].dom.offset().left >= winWidth) {
+          if (flySlots[i][j]["dom"].width() + flySlots[i][j]["dom"].offset().left >= winWidth) {
             allAway = false;
           }
         }
@@ -265,7 +276,7 @@ $(document).ready(function() {
           flySlots[i].push({
             "dom": createDom(danmakus.shift(), i)
           });
-          flySlots[i][l].dom.animate({ left: (-1 - flySlots[i][l].dom.width()) + "px" }, 10000);
+          flySlots[i][l]["dom"].animate({ left: (-1 - flySlots[i][l]["dom"].width()) + "px" }, animateInterval);
           break;
         }
       }
@@ -276,9 +287,9 @@ $(document).ready(function() {
       if (fixedSlots[i] === null) {
         continue;
       }
-      ++fixedSlots[i].liveCount;
-      if (fixedSlots[i].liveCount > 10) {
-        fixedSlots[i].dom.remove();
+      ++fixedSlots[i]["liveCount"];
+      if (fixedSlots[i]["liveCount"] > animateInterval / allocInterval) {
+        fixedSlots[i]["dom"].remove();
         fixedSlots[i] = null;
       }
     }
@@ -287,8 +298,8 @@ $(document).ready(function() {
         continue;
       }
       for (var j = 0; j < flySlots[i].length; ++j) {
-        if (flySlots[i][j].dom.width() + flySlots[i][j].dom.offset().left <= 0) {
-          flySlots[i][j].dom.remove();
+        if (flySlots[i][j].dom.width() + flySlots[i][j]["dom"].offset().left <= 0) {
+          flySlots[i][j]["dom"].remove();
           flySlots[i].splice(j, 1);
         }
       }
@@ -296,13 +307,13 @@ $(document).ready(function() {
   }
   setInterval(function () {
     pollDanmakus();
-  }, 1000);
+  }, pollInterval);
   setInterval(function () {
     winHeight = $(window).height();
     winWidth = $(window).width();
     removeDanmakus();
     allocDanmakus();
-  }, 300);
+  }, allocInterval);
 });
 
 </script>
