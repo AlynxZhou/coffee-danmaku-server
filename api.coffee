@@ -40,7 +40,7 @@ module.exports = (fastify, opts, next) ->
       request.headers["x-danmaku-auth-key"] isnt c.password
         reply.send(403)
       else
-        if Date.now() - c.ipTime[ip] > 3 * 1000
+        if Date.now() - c.ipTime[ip] > 1 * 1000
           c.ipTime[ip] = Date.now()
           await c.pushDanmaku(new Danmaku(request.body))
           reply.send({ "status": "ok" })

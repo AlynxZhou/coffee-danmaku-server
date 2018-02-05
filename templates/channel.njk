@@ -91,8 +91,8 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="password" class="control-label">频道密码</label>
-        <input autocomplete="off" type="password" class="form-control" id="password" v-model="password" name="password" placeholder="频道密码（如果有）">
+        <label for="password" class="control-label">频道密码（如果有）</label>
+        <input autocomplete="off" type="password" class="form-control" id="password" v-model="password" name="password" placeholder="在这里填写频道密码（如果有）">
       </div>
       <div class="form-group">
         <label for="danmaku">弹幕内容</label>
@@ -176,7 +176,7 @@ $(document).ready(function() {
   var flySlots = [];
   for (var i = 0; i < slotLength; ++i) {
     fixedSlots.push(null);
-    flySlots.push(null);
+    flySlots.push([]);
   }
   var pollOffset = Date.now();
   function pollDanmakus() {
@@ -254,11 +254,18 @@ $(document).ready(function() {
       }
     } else if (danmakus[0].position === "fly") {
       for (var i = 0; i < slotLength; ++i) {
-        if (flySlots[i] === null) {
-          flySlots[i] = {
+        var allAway = true;
+        for (var j = 0; j < flySlots[i].length; ++j) {
+          if (flySlots[i][j].dom.width() + flySlots[i][j].dom.offset().left >= winWidth) {
+            allAway = false;
+          }
+        }
+        if (allAway) {
+          var l = flySlots[i].length;
+          flySlots[i].push({
             "dom": createDom(danmakus.shift(), i)
-          };
-          flySlots[i].dom.animate({ left: (-1 - flySlots[i].dom.width()) + "px" }, 10000);
+          });
+          flySlots[i][l].dom.animate({ left: (-1 - flySlots[i][l].dom.width()) + "px" }, 10000);
           break;
         }
       }
@@ -276,22 +283,26 @@ $(document).ready(function() {
       }
     }
     for (var i = 0; i < slotLength; ++i) {
-      if (flySlots[i] === null) {
+      if (flySlots[i] === []) {
         continue;
       }
-      if (flySlots[i].dom.width() + flySlots[i].dom.offset().left <= 0) {
-        flySlots[i].dom.remove();
-        flySlots[i] = null;
+      for (var j = 0; j < flySlots[i].length; ++j) {
+        if (flySlots[i][j].dom.width() + flySlots[i][j].dom.offset().left <= 0) {
+          flySlots[i][j].dom.remove();
+          flySlots[i].splice(j, 1);
+        }
       }
     }
   }
   setInterval(function () {
+    pollDanmakus();
+  }, 1000);
+  setInterval(function () {
     winHeight = $(window).height();
     winWidth = $(window).width();
-    pollDanmakus();
     removeDanmakus();
-  }, 1000);
-  setInterval(allocDanmakus, 300);
+    allocDanmakus();
+  }, 300);
 });
 
 </script>
