@@ -95,7 +95,7 @@ module.exports = fp((fastify, opts, next) ->
     listChannelValue: () =>
       @cleanChannels()
       res = []
-      for c of @channels
+      for c in @channels
         res.push(c.toValue())
       return res
 
