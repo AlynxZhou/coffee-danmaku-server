@@ -6,7 +6,7 @@ module.exports = (fastify, opts, next) ->
   fastify.get("/", (request, reply) ->
     nunjucks.render("index.njk",
     {
-      "channels": channelManager.listChannel(),
+      "channels": channelManager.listChannelValue(),
       "createChannel": "/channel/create"
     }, (err, res) ->
       if err
@@ -17,7 +17,7 @@ module.exports = (fastify, opts, next) ->
   fastify.get("/index*", (request, reply) ->
     nunjucks.render("index.njk",
     {
-      "channels": channelManager.listChannel(),
+      "channels": channelManager.listChannelValue(),
       "createChannel": "/channel/create"
     }, (err, res) ->
       if err

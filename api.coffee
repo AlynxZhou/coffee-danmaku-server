@@ -13,7 +13,7 @@ module.exports = (fastify, opts, next) ->
       reply.send({ "url": c.url })
   )
   fastify.get("/channel", (request, reply) ->
-    reply.send(channelManager.listChannel())
+    reply.send(channelManager.listChannelValue())
   )
   fastify.get("/channel/:cname", (request, reply) ->
     try

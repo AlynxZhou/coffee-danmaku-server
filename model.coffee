@@ -72,28 +72,31 @@ module.exports = fp((fastify, opts, next) ->
 
   class ChannelManager
     constructor: () ->
-      @channels = {}
+      @channels = []
       @addChannel(new Channel("demo", "test"))
 
     addChannel: (channel) =>
       @cleanChannels()
-      @channels[channel["name"]] = channel
+      @channels.push(channel)
 
     getChannelByName: (name) =>
       @cleanChannels()
-      return @channels[name]
+      for c in @channels
+        if c.name is name
+          return c
+      return null
 
     cleanChannels: () =>
-      for k, v of @channels
-        if v.isExpired()
-          v.delete()
-          delete @channels[k]
+      for i in [0...@channels.length]
+        if @channels[i].isExpired()
+          @channels[i].delete()
+          @channels.splice(i, 1)
 
-    listChannel: () =>
+    listChannelValue: () =>
       @cleanChannels()
       res = []
-      for k, v of @channels
-        res.push(v.toValue())
+      for c of @channels
+        res.push(c.toValue())
       return res
 
   fastify.decorate("channelManager", new ChannelManager())
