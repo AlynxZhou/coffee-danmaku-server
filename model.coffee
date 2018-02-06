@@ -96,10 +96,33 @@ module.exports = fp((fastify, opts, next) ->
 
     listChannelValue: () =>
       @cleanChannels()
-      res = []
+      result = []
       for c in @channels
-        res.push(c.toValue())
+        result.push(c.toValue())
       return res
+
+    toString: () =>
+      tmp = []
+      for c in @channels
+        tmp.push({
+          "name": c.name,
+          "desc": c.desc,
+          "expireTime": c.expireTime,
+          "isOpen": c.isOpen,
+          "password": c.password
+        })
+      return JSON.stringify({ "channels": tmp }, null, "  ")
+
+    fromString: (json) =>
+      tmp = JSON.parse(json)["channels"]
+      if not tmp?
+        return
+      @channels = []
+      for c in tmp
+        @addChannel(new Channel(c.name, c.desc, c.expireTime,
+        c.isOpen, c.password))
+      if not @getChannelByName("demo")?
+        @addChannel(new Channel("demo", "test"))
 
   fastify.decorate("channelManager", new ChannelManager())
   fastify.decorate("Channel", Channel)

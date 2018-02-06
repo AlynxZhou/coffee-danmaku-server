@@ -42,10 +42,10 @@ module.exports = (fastify, opts, next) ->
     {
       "channel": c,
       "apiCreateDanmaku": "/api/channel/#{cname}/danmaku"
-    }, (err, res) ->
+    }, (err, result) ->
       if err
         reply.send(err)
-      reply.header("Content-Type", "text/html").send(res)
+      reply.header("Content-Type", "text/html").send(result)
     )
   )
   fastify.get("/test", (request, reply) ->

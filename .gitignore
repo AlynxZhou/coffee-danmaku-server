@@ -59,3 +59,4 @@ typings/
 
 .tags
 package-lock.json
+data.json

@@ -50,7 +50,7 @@ $(document).ready(function() {
     $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
     setTimeout(function () {
       $("#error-container").empty();
-    }, 5000);
+    }, 1000);
   }
   function validate() {
     var valid = true;
@@ -135,6 +135,12 @@ $(document).ready(function() {
             pollOffset = danmakus[i]["time"] + 1;
           }
         }
+      },
+      "statusCode": {
+        "403": function () {
+          showError("密码错误，请重新输入！");
+          $("#submit").attr("disabled", false);
+        }
       }
     });
   }
@@ -182,8 +188,6 @@ $(document).ready(function() {
     }
   }
   function allocDanmakus() {
-    console.log(fixedSlots);
-    console.log(flySlots);
     if (danmakus.length === 0) {
       return;
     }
