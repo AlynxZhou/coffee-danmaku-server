@@ -11,60 +11,51 @@ body {
 {% block js %}
 <script type="text/javascript">
 $(document).ready(function() {
-  var show_error = function(msg) {
-    $("#error_container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
-  };
-
-  var validate = function() {
+  function showError(msg) {
+    $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
+    setTimeout(function () {
+      $("#error-container").empty();
+    }, 5000);
+  }
+  function validate() {
     var valid = true;
     var namer = /^[a-zA-Z][a-zA-Z0-9_\-]{1,}$/;
-
-    if(!$("#name").val().match(namer)) {
-      show_error("频道名称有误！");
-      return false;
+    if (!$("#name").val().match(namer)) {
+      showError("频道名称有误！");
+      valid = false;
     }
-    if($("#desc").val() == "") {
-      show_error("频道说明必填！");
-      return false;
+    if ($("#desc").val().trim().length === 0) {
+      showError("频道说明必填！");
+      valid = false;
     }
-    // if($("#sub_passwd").val() == "") {
-    //   show_error("播放密码必填！");
-    //   return false;
-    // }
-    // if($("#expire_time").val() == "") {
-    //   show_error("播放密码必填！");
-    //   return false;
-    // }
-
     return valid;
   };
-
-  $("#submit").click(function(){
-    if (validate() == false) {
+  $("#form-channel").submit(function(event) {
+    event.preventDefault();
+    if (!validate()) {
       return;
     }
-
+    $("#submit").attr("disabled", true);
     $.ajax({
-      type: "POST",
-      url: "{{ apiCreateChannel }}",
-      headers: {"Content-Type": "application/json"},
-      data: JSON.stringify({
+      "type": "POST",
+      "url": "{{ apiCreateChannel }}",
+      "dataType": "json",
+      "headers": { "Content-Type": "application/json" },
+      "data": JSON.stringify({
         "name": $("#name").val(),
-        "desc": $("#desc").val(),
+        "desc": $("#desc").val().trim(),
         "expireTime": parseInt($("form input[name=ttl]:checked").val()) * 60 * 60 * 1000 + Date.now(),
         "password": $("#password").val()
-        // "sub_passwd": $("#sub_passwd").val(),
-        // "pub_passwd": $("#pub_passwd").val(),
-        // "exam_passwd": $("#exam_passwd").val()
       }),
-      success: function(data) {
+      "success": function(data) {
+        $("#submit").attr("disabled", false);
         document.location.href = data.url;
       },
-      error: function(jqxhr, text) {
-        show_error(jqxhr.responseText);
+      "error": function(jqxhr, text) {
+        $("#submit").attr("disabled", false);
+        showError(jqxhr.responseText);
       }
     });
-
   });
 });
 </script>
@@ -77,15 +68,14 @@ $(document).ready(function() {
   <div class="col-md-8 col-md-offset-2">
     <h2>新建频道</h2>
     <div>
-      <div id="error_container">
-      </div>
+      <div id="error-container"></div>
       <div class="alert alert-info">
         <p><strong>注意:</strong></p>
         <ul>
           <li>频道名称只能含有字母、数字、连字符和下划线，并且必须以字母开头。</li>
         </ul>
       </div>
-      <form class="form-horizontal" role="form">
+      <form id="form-channel" class="form-horizontal" role="form">
         <div class="form-group">
           <label for="name" class="col-sm-2 control-label">频道名称</label>
           <div class="col-sm-10">
@@ -98,24 +88,6 @@ $(document).ready(function() {
             <input autocomplete="off" type="text" class="form-control" id="desc" name="desc" placeholder="频道描述">
           </div>
         </div>
-        {# <div class="form-group">
-          <label for="sub_passwd" class="col-sm-2 control-label">{{_("Playing Password")}}</label>
-          <div class="col-sm-10">
-            <input autocomplete="off" type="password" class="form-control" id="sub_passwd" name="sub_passwd" placeholder="{{_("Password for playing danmaku (required)")}}">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="pub_passwd" class="col-sm-2 control-label">{{_("Publish Password")}}</label>
-          <div class="col-sm-10">
-            <input autocomplete="off" type="password" class="form-control" id="pub_passwd" name="pub_passwd" placeholder="{{_("Password for publishing danmaku (optional)")}}">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="pub_passwd" class="col-sm-2 control-label">{{_("Review Password")}}</label>
-          <div class="col-sm-10">
-            <input autocomplete="off" type="password" class="form-control" id="exam_passwd" name="exam_passwd" placeholder="{{_("If contents need reviewing, fill this password (optional)")}}">
-          </div>
-        </div> #}
         <div class="form-group">
           <label for="passwd" class="col-sm-2 control-label">频道密码</label>
           <div class="col-sm-10">
@@ -142,15 +114,9 @@ $(document).ready(function() {
             </label>
           </div>
         </div>
-        {# <div class="form-group">
-          <label for="expire_time" class="col-sm-2 control-label">过期时间</label>
-          <div class="col-sm-10">
-            <input autocomplete="off" type="text" class="form-control" id="expire_time" name="expire_time" placeholder="10000">
-          </div>
-        </div> #}
         <div class="form-group">
           <div class="col-sm-12">
-            <div class="btn btn-default btn-success" id="submit">提交</div>
+            <input type="submit" id="submit" class="btn btn-success" value="提交">
           </div>
         </div>
       </form>

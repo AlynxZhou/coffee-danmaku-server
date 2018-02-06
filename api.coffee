@@ -38,7 +38,7 @@ module.exports = (fastify, opts, next) ->
         c.ipTime[ip] = 0
       if (not c.isOpen) and
       request.headers["x-danmaku-auth-key"] isnt c.password
-        reply.send(403)
+        reply.code(403)
       else
         if Date.now() - c.ipTime[ip] > 1 * 1000
           c.ipTime[ip] = Date.now()
@@ -46,9 +46,9 @@ module.exports = (fastify, opts, next) ->
             await c.pushDanmaku(new Danmaku(request.body))
           reply.send({ "status": "ok" })
         else
-          reply.send({ "status": "Too fast!" })
+          reply.code(428)
     catch err
-      reply.send(err)
+      console.error(err)
   )
   fastify.get("/channel/:cname/danmaku", (request, reply) ->
     try

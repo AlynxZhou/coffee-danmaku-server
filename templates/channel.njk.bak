@@ -1,0 +1,355 @@
+{% extends "base.njk" %}
+{% block title %}{{ channel.name }}{% endblock %}
+
+{% block body %}
+<div class="row" id="danmaku-channel">
+  <div class="col-md-8 col-md-offset-2">
+    <h1>{{ channel.name }}</h1>
+    <h2>{{ channel.desc }}</h2>
+    {# {% if not channel.is_open and not passwd %}
+    <form class="form-inline" role="form" @submit="set_passwd" v-show="!pub_passwd">
+      <div class="form-group">
+        <input type="password" class="form-control" v-model="pub_passwd_buf" placeholder="{{_('Channel Password')}}">
+        <div class="btn btn-success" @click="set_passwd">{{_('Save')}}</div>
+      </div>
+    </form>
+    {% endif %} #}
+
+    {% raw %}
+    <div v-show="error_msg">
+      <div class='alert alert-danger'>{{error_msg}}</div>
+    </div>
+    {% endraw %}
+
+    {# QR code #}
+    {# <div class="dropdown">
+      <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+        <span class="glyphicon glyphicon-qrcode"></span>
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+        <li>
+          <div id="qrcode"></div>
+          <script type="text/javascript">new QRCode(document.getElementById("qrcode"), document.URL);</script>
+        </li>
+      </ul>
+    </div> #}
+    {# <div id="token">{{ token }}</div> #}
+
+    {# danmaku form #}
+    <form @submit="post_danmaku">
+      <div class="form-group" id="position-selection">
+        <label for="position">弹幕位置</label>
+        <div>
+          <label class="radio-inline">
+            <input type="radio" name="position" value="fly" v-model="position" checked> 飞过
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="position" value="top" v-model="position"> 顶部
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="position" value="bottom" v-model="position"> 底部
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="color-selection">
+        <label for="style">弹幕颜色</label>
+        <div>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="white" v-model="color" checked>
+            <span class="label label-white">白色</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="blue" v-model="color">
+            <span class="label label-blue">蓝色</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="red" v-model="color">
+            <span class="label label-red">红色</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="yellow" v-model="color">
+            <span class="label label-yellow">黄色</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="cyan" v-model="color">
+            <span class="label label-cyan">青色</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="green" v-model="color">
+            <span class="label label-green">绿色</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="purple" v-model="color">
+            <span class="label label-purple">紫色</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="style" value="black" v-model="color">
+            <span class="label label-black">黑色</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password" class="control-label">频道密码（如果有）</label>
+        <input autocomplete="off" type="password" class="form-control" id="password" v-model="password" name="password" placeholder="在这里填写频道密码（如果有）">
+      </div>
+      <div class="form-group">
+        <label for="danmaku">弹幕内容</label>
+        <input type="text" class="form-control" name="content" autocomplete="off" v-model="content" placeholder="在这里发射弹幕">
+      </div>
+
+      <input type="submit" class="btn btn-success" value="发射" :disabled="disabled" />
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function() {
+  // var token = $("#token").remove().text();
+  var channelVue = new Vue({
+    el: "#danmaku-channel",
+    data: {
+      content: "",
+      position: "fly",
+      color: "white",
+      error_msg: "",
+      password: "",
+      // pub_passwd_buf: "",
+      // pub_passwd: "{{passwd}}",
+      // token: $("#token").remove().text(),
+      disabled: false
+    },
+    methods: {
+      post_danmaku: function (ev) {
+        ev.preventDefault();
+        this.disabled = true;
+        if (this.content.trim().length === 0) {
+          return;
+        }
+        var data = JSON.stringify({
+          content: this.content.trim(),
+          color: this.color,
+          position: this.position
+        });
+        $.ajax({
+          type: "POST",
+          dataType: "json",
+          headers: {
+            "Content-Type": "application/json",
+            "X-DANMAKU-AUTH-KEY": $("#password").val()
+            // "X-DANMAKU-TOKEN": token
+          },
+          url: "{{ apiCreateDanmaku }}",
+          data: data,
+          success: function(data) {
+            channelVue.content = "";
+            channelVue.disabled = false;
+            console.log(data["status"]);
+          },
+          statusCode: {
+            403: function() {
+              channelVue.show_error("密码错误，重新输入！");
+            },
+            428: function() {
+              channelVue.show_error("操作太快，请休息一下！");
+            }
+          }
+        });
+      },
+      show_error: function(msg) {
+        this.error_msg = msg;
+      },
+    }
+  });
+
+  var winHeight = $(window).height();
+  var winWidth = $(window).width();
+  var danmakus = [];
+  var pollOffset = Date.now();
+  var animateInterval = 10000;
+  var pollInterval = 1000;
+  var allocInterval = 500;
+  var slotLength = 30;
+  var fixedSlots = [];
+  var flySlots = [];
+  for (var i = 0; i < slotLength; ++i) {
+    fixedSlots.push(null);
+    flySlots.push([]);
+  }
+  function pollDanmakus() {
+    $.ajax({
+      type: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-DANMAKU-AUTH-KEY": $("#password").val()
+        // "X-GDANMAKU-TOKEN": "WEB:" + this.token
+      },
+      url: "/api/channel/{{ channel.name }}/danmaku?time=" + pollOffset,
+      success: function (data) {
+        danmakus = danmakus.concat(data);
+        for (var i = 0; i < danmakus.length; ++i) {
+          if (danmakus[i]["time"] > pollOffset) {
+            pollOffset = danmakus[i]["time"] + 1;
+          }
+        }
+      }
+    });
+  }
+  var colorRGBA = {
+    "red": "rgba(255, 0, 0, 255)",
+    "green": "rgba(0, 255, 0, 255)",
+    "blue": "rgba(0, 0, 255, 255)",
+    "white": "rgba(255, 255, 255, 255)",
+    "yellow": "rgba(255, 255, 0, 255)",
+    "cyan": "rgba(0, 255, 255, 255)",
+    "purple": "rgba(128, 0, 128, 255)",
+    "black": "rgba(0, 0, 0, 255)"
+  }
+  function createDom(dmk, i) {
+    var jqueryDom = $("<div class='danmaku'>" + dmk["content"] + "</div>");
+    var fontColor = colorRGBA[dmk["color"]];
+    var fontSize = winHeight / slotLength + "px";
+    var left = winWidth + "px";
+    var top = i * winHeight / slotLength +  "px";
+    var css = {
+      "white-space": "nowrap",
+      "position": 'absolute',
+      "color": fontColor,
+      "font-size": fontSize,
+      "left": left,
+      "top": top
+      // "-webkit-text-stroke": "1px black",
+      // "text-stroke": "1px black",
+    }
+    if (dmk["color"] === "white" || dmk["color"] === "yellow" || dmk["color"] === "cyan" || dmk["color"] === "green") {
+      css["text-shadow"] = "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
+    }
+    jqueryDom.css(css);
+    $("body").append(jqueryDom);
+    return jqueryDom;
+  }
+  function allocDanmakus() {
+    if (danmakus.length === 0) {
+      return;
+    }
+    if (danmakus[0]["position"] === "top") {
+      for (var i = 0; i < slotLength; ++i) {
+        if (fixedSlots[i] === null) {
+          fixedSlots[i] = {
+            "dom": createDom(danmakus.shift(), i),
+            "liveCount": 0
+          };
+          fixedSlots[i]["dom"].css({ "left": winWidth / 2 - fixedSlots[i]["dom"].width() / 2 + "px"})
+          break;
+        }
+      }
+    } else if (danmakus[0].position === "bottom") {
+      for (var i = slotLength - 1; i >= 0; --i) {
+        if (fixedSlots[i] === null) {
+          fixedSlots[i] = {
+            "dom": createDom(danmakus.shift(), i),
+            "liveCount": 0
+          };
+          fixedSlots[i]["dom"].css({ "left": winWidth / 2 - fixedSlots[i]["dom"].width() / 2 + "px"})
+          break;
+        }
+      }
+    } else if (danmakus[0].position === "fly") {
+      for (var i = 0; i < slotLength; ++i) {
+        var allAway = true;
+        for (var j = 0; j < flySlots[i].length; ++j) {
+          if (flySlots[i][j]["dom"].width() + flySlots[i][j]["dom"].offset().left >= winWidth) {
+            allAway = false;
+          }
+        }
+        if (allAway) {
+          var l = flySlots[i].length;
+          flySlots[i].push({
+            "dom": createDom(danmakus.shift(), i)
+          });
+          flySlots[i][l]["dom"].animate({ left: (-1 - flySlots[i][l]["dom"].width()) + "px" }, animateInterval);
+          break;
+        }
+      }
+    }
+  }
+  function removeDanmakus() {
+    for (var i = 0; i < slotLength; ++i) {
+      if (fixedSlots[i] === null) {
+        continue;
+      }
+      ++fixedSlots[i]["liveCount"];
+      if (fixedSlots[i]["liveCount"] > animateInterval / allocInterval) {
+        fixedSlots[i]["dom"].remove();
+        fixedSlots[i] = null;
+      }
+    }
+    for (var i = 0; i < slotLength; ++i) {
+      if (flySlots[i] === []) {
+        continue;
+      }
+      for (var j = 0; j < flySlots[i].length; ++j) {
+        if (flySlots[i][j].dom.width() + flySlots[i][j]["dom"].offset().left <= 0) {
+          flySlots[i][j]["dom"].remove();
+          flySlots[i].splice(j, 1);
+        }
+      }
+    }
+  }
+  setInterval(function () {
+    pollDanmakus();
+  }, pollInterval);
+  setInterval(function () {
+    winHeight = $(window).height();
+    winWidth = $(window).width();
+    removeDanmakus();
+    allocDanmakus();
+  }, allocInterval);
+});
+
+</script>
+{% endblock %}
+
+{% block css %}
+<style type="text/css">
+body {
+  padding-top: 40px;
+}
+#qrcode {
+  padding: 20px;
+}
+.label.label-white {
+  background: #fff;
+  border: 1px solid #666;
+  color: #666;
+}
+.label.label-blue {
+  background-color: #145fc6;
+}
+.label.label-red {
+  background-color: #e72200;
+}
+.label.label-green {
+  background-color: #04ca00;
+}
+.label.label-cyan {
+  background-color: #0ff;
+  color: #666;
+}
+.label.label-yellow {
+  background-color: #fffa00;
+  color: #666;
+}
+.label.label-purple {
+  background-color: #808;
+}
+.label.label-black {
+  background-color: #000;
+}
+</style>
+{% endblock %}
