@@ -207,7 +207,10 @@ $(document).ready(function() {
         }
       }
     } else if (danmakus[0].position === "fly") {
-      for (var i = 0; i < slotLength; ++i) {
+      for (var i = slotLength / 3; i < slotLength + slotLength / 3; ++i) {
+        if (i >= slotLength) {
+          i %= slotLength;
+        }
         if (flySlots[i] === null) {
           flySlots[i] = createDom(danmakus.shift(), i);
           break;
