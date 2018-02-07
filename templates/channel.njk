@@ -124,22 +124,23 @@ $(document).ready(function() {
     "black": "rgba(0, 0, 0, 255)"
   }
   function pollDanmakus() {
-    for (var i = 0; i < danmakus.length; ++i) {
-      if (danmakus[i]["time"] > pollOffset) {
-        pollOffset = danmakus[i]["time"] + 1;
-      }
-    }
     $.ajax({
       "type": "GET",
       "headers": { "X-Danmaku-Auth-Key": $("#password").val() },
       "url": "/api/channel/{{ channel.name }}/danmaku?time=" + pollOffset,
       "success": function (data) {
         danmakus = danmakus.concat(data);
+        for (var i = 0; i < danmakus.length; ++i) {
+          if (danmakus[i]["time"] > pollOffset) {
+            pollOffset = danmakus[i]["time"] + 1;
+          }
+        }
+        setTimeout(pollDanmakus, pollInterval);
       },
       "statusCode": {
         "403": function () {
           showError("密码错误，请重新输入！");
-          $("#submit").attr("disabled", false);
+          setTimeout(pollDanmakus, pollInterval);
         }
       }
     });
@@ -214,7 +215,7 @@ $(document).ready(function() {
       }
     }
   }
-  setInterval(function () { pollDanmakus(); }, pollInterval);
+  pollDanmakus();
   setInterval(function () {
     winHeight = $(window).height();
     winWidth = $(window).width();
