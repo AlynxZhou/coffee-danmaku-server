@@ -6,15 +6,18 @@ module.exports = fp((fastify, opts, next) ->
   Promise.promisifyAll(redis)
 
   class Danmaku
-    constructor: (content = "", color = "white", position = "fly") ->
+    constructor: (content = "", color = "white",
+    position = "fly", time = Date.now()) ->
       @content = content
       @color = color
       @position = position
-      @time = Date.now()
+      @time = time
       if content instanceof Object
         @content = content["content"]
         @color = content["color"]
         @position = content["position"]
+        if content["time"]?
+          @time = content["time"]
       else if content instanceof String
         @fromString(content)
       if @content.length > 234
