@@ -124,17 +124,17 @@ $(document).ready(function() {
     "black": "rgba(0, 0, 0, 255)"
   }
   function pollDanmakus() {
+    for (var i = 0; i < danmakus.length; ++i) {
+      if (danmakus[i]["time"] > pollOffset) {
+        pollOffset = danmakus[i]["time"] + 1;
+      }
+    }
     $.ajax({
       "type": "GET",
       "headers": { "X-Danmaku-Auth-Key": $("#password").val() },
       "url": "/api/channel/{{ channel.name }}/danmaku?time=" + pollOffset,
       "success": function (data) {
         danmakus = danmakus.concat(data);
-        for (var i = 0; i < danmakus.length; ++i) {
-          if (danmakus[i]["time"] > pollOffset) {
-            pollOffset = danmakus[i]["time"] + 1;
-          }
-        }
       },
       "statusCode": {
         "403": function () {
