@@ -1,5 +1,5 @@
-fp = require("fastify-plugin")
 Promise = require("bluebird")
+fp = require("fastify-plugin")
 
 module.exports = fp((fastify, opts, next) ->
   { redis } = fastify
@@ -102,7 +102,7 @@ module.exports = fp((fastify, opts, next) ->
       result = []
       for c in @channels
         result.push(c.toValue())
-      return res
+      return result
 
     toString: () =>
       tmp = []

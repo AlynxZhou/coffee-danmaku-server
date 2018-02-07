@@ -16,3 +16,10 @@ module.exports = (fastify, opts, next) ->
       process.exit()
     )
   )
+  fs.readFile("data.json", "utf8", (err, result) ->
+    if err
+      console.error(err)
+    else
+      channelManager.fromString(result)
+  )
+  next()
