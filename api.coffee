@@ -1,14 +1,15 @@
 module.exports = (fastify, opts, next) ->
-  { channelManager, Channel, Danmaku } = fastify
+  { channelManager, Channel, Danmaku, blacklist } = fastify
   fastify.post("/channel", (request, reply) ->
-    if channelManager.getChannelByName(request.body.name)?
-      reply.send(new Error("Channel #{request.body.name} Exists"))
+    if channelManager.getChannelByName(request.body["name"])?
+      reply.send(new Error("Channel #{request.body["name"]} Exists"))
       return
     isOpen = true
-    if request.body.password?
+    if request.body["password"]?
       isOpen = false
-    c = new Channel(request.body.name, request.body.desc,
-    request.body.expireTime, isOpen, request.body.password)
+    c = new Channel(request.body["name"], request.body["desc"],
+    request.body["expireTime"], isOpen, request.body["password"],
+    request.body["useBlacklist"])
     channelManager.addChannel(c)
     reply.send({ "url": c.url })
   )
@@ -49,6 +50,9 @@ module.exports = (fastify, opts, next) ->
       c.ipTime[ip] = Date.now()
       if request.body["content"].length is 0
         reply.send(new Error("Empty Danmaku"))
+        return
+      if c.useBlacklist and request.body["content"].match(blacklist)?
+        reply.code(444).send(new Error("Blacklist Word"))
         return
       await c.pushDanmaku(new Danmaku(request.body))
       reply.send({ "status": "ok" })

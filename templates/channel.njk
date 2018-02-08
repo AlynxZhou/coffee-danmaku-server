@@ -94,6 +94,11 @@ $(document).ready(function() {
           setTimeout(function () {
             $("#submit").attr("disabled", false);
           }, 1000);
+        },
+        "444": function () {
+          showError("不和谐词汇，已被屏蔽！");
+          $("#content").val("");
+          $("#submit").attr("disabled", false);
         }
       }
     });

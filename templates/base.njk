@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <style media="screen">
+    .footer {
+      width: 100%;
+      margin-top: 20px;
+      padding-top: 20px;
+      padding-bottom: 20px;
+      background-color: #f5f5f5;
+    }
+    </style>
     {% block css %}
     {% endblock %}
     <script type="text/javascript" src="/js/jquery.min.js"></script>
@@ -19,5 +29,15 @@
       {% block body %}
       {% endblock %}
     </div>
+    <footer class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-10 col-md-10" style="margin-bottom: 5px;">
+            <p>从<a href="https://github.com/AlynxZhou/coffee-danmaku-server">这里</a>获取服务端代码，<a href="https://github.com/AlynxZhou/vala-danmaku-client">这里</a>获取桌面版弹幕客户端。</p>
+            <p>Code by <a href="https://alynx.xyz/">AlynxZhou</a>.</p>
+          </div>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

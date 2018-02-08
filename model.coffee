@@ -1,3 +1,4 @@
+fs = require("fs")
 Promise = require("bluebird")
 fp = require("fastify-plugin")
 
@@ -41,13 +42,14 @@ module.exports = fp((fastify, opts, next) ->
 
   class Channel
     constructor: (name, desc, expireTime = null,
-    isOpen = true, password = null) ->
+    isOpen = true, password = null, useBlacklist = false) ->
       @redis = redis
       @name = name
       @desc = desc
       @expireTime = expireTime
       @isOpen = isOpen
       @password = password
+      @useBlacklist = useBlacklist
       @url = "/channel/#{@name}"
       @channelKey = "channel_#{@name}"
       @ipTime = {}
@@ -58,7 +60,8 @@ module.exports = fp((fastify, opts, next) ->
         "desc": @desc,
         "expireTime": @expireTime,
         "isOpen": @isOpen,
-        "url": @url
+        "url": @url,
+        "useBlacklist": @useBlacklist
       }
 
     isExpired: () =>
@@ -112,7 +115,8 @@ module.exports = fp((fastify, opts, next) ->
           "desc": c.desc,
           "expireTime": c.expireTime,
           "isOpen": c.isOpen,
-          "password": c.password
+          "password": c.password,
+          "useBlacklist": c.useBlacklist
         })
       return JSON.stringify({ "channels": tmp }, null, "  ")
 
@@ -123,12 +127,19 @@ module.exports = fp((fastify, opts, next) ->
       @channels = []
       for c in tmp
         @addChannel(new Channel(c.name, c.desc, c.expireTime,
-        c.isOpen, c.password))
+        c.isOpen, c.password, c.useBlacklist))
       if not @getChannelByName("demo")?
         @addChannel(new Channel("demo", "test"))
 
   fastify.decorate("channelManager", new ChannelManager())
   fastify.decorate("Channel", Channel)
   fastify.decorate("Danmaku", Danmaku)
+  fs.readFile("blacklist.txt", "utf8", (err, result) ->
+    if err
+      console.error(err)
+    else
+      blacklist = new RegExp(result)
+      fastify.decorate("blacklist", blacklist)
+  )
   next()
 )

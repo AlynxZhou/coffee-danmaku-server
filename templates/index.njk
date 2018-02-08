@@ -23,7 +23,7 @@
         <tbody>
           {%- for chan in channels %}
           <tr>
-            <td><a href="{{ chan.url }}">{% if not chan.isOpen %}<i class="glyphicon glyphicon-lock"></i>{% endif %} {{ chan.name }}</a> </td>
+            <td><a href="{{ chan.url }}">{% if not chan.isOpen %}<i class="fa fa-lock"></i>{% endif %} {% if chan.useBlacklist %}<i class="fa fa-black-tie"></i>{% endif %} {{ chan.name }}</a> </td>
             <td>{{ chan.desc }}</td>
           </tr>
           {% endfor -%}
