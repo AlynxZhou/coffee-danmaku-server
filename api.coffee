@@ -67,7 +67,7 @@ module.exports = (fastify, opts, next) ->
         request.query["time"] = Date.now() - 10 * 60 * 1000
       if (not c.isOpen) and
       request.headers["x-danmaku-auth-key"] isnt c.password
-        reply.code(403).send([])
+        reply.code(403).send(new Error("Wrong password!"))
         return
       danmakuStrs = await c.getDanmakus(request.query["time"])
       danmakus = (JSON.parse(s) for s in danmakuStrs)
