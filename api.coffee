@@ -72,7 +72,7 @@ module.exports = (fastify, opts, next) ->
         return
       # If no time offset given return danmakus in 10 minutes.
       if not request.query["time"]?
-        request.query["time"] = Date.now() - 10 * 60 * 1000
+        request.query["time"] = Date.now() - 1 * 60 * 1000
       if (not c.isOpen) and
       request.headers["x-danmaku-auth-key"] isnt c.password
         reply.code(403).send(new Error("Wrong password!"))
