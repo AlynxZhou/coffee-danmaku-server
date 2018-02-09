@@ -2,7 +2,7 @@ module.exports = (fastify, opts, next) ->
   { channelManager, Channel, Danmaku, blacklist } = fastify
   fastify.post("/channel", (request, reply) ->
     if channelManager.getChannelByName(request.body["name"])?
-      reply.send(new Error("Channel #{request.body["name"]} Exists"))
+      reply.code(403).send(new Error("Channel #{request.body["name"]} Exists"))
       return
     isOpen = true
     if request.body["password"]?
@@ -20,7 +20,8 @@ module.exports = (fastify, opts, next) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
-        reply.send(new Error("Channel #{request.params["cname"]} Not Found"))
+        reply.code(404)
+        .send(new Error("Channel #{request.params["cname"]} Not Found"))
         return
       reply.send(c.toValue())
     catch err
@@ -31,7 +32,8 @@ module.exports = (fastify, opts, next) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
-        reply.send(new Error("Channel #{request.params["cname"]} Not Found"))
+        reply.code(404)
+        .send(new Error("Channel #{request.params["cname"]} Not Found"))
         return
       req = request.raw
       ip = request.headers["x-forwarded-for"]?.split(",").pop() or
@@ -51,7 +53,8 @@ module.exports = (fastify, opts, next) ->
       if request.body["content"].length is 0
         reply.send(new Error("Empty Danmaku"))
         return
-      if c.useBlacklist and request.body["content"].match(blacklist)?
+      if c.useBlacklist and blacklist? and
+      request.body["content"].match(blacklist)?
         reply.code(444).send(new Error("Blacklist Word"))
         return
       await c.pushDanmaku(new Danmaku(request.body))
@@ -64,7 +67,8 @@ module.exports = (fastify, opts, next) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
-        reply.send(new Error("Channel #{request.params["cname"]} Not Found"))
+        reply.code(404)
+        .send(new Error("Channel #{request.params["cname"]} Not Found"))
         return
       # If no time offset given return danmakus in 10 minutes.
       if not request.query["time"]?

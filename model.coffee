@@ -140,6 +140,6 @@ module.exports = fp((fastify, opts, next) ->
     else
       blacklist = new RegExp(result)
       fastify.decorate("blacklist", blacklist)
+    next()
   )
-  next()
 )
