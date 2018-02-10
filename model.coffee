@@ -8,17 +8,17 @@ module.exports = fp((fastify, opts, next) ->
 
   class Danmaku
     constructor: (content = "", color = "white",
-    position = "fly", time = Date.now()) ->
+    position = "fly", offset = Date.now()) ->
       @content = content
       @color = color
       @position = position
-      @time = time
+      @offset = offset
       if content instanceof Object
         @content = content["content"]
         @color = content["color"]
         @position = content["position"]
-        if content["time"]?
-          @time = content["time"]
+        if content["offset"]?
+          @offset = content["offset"]
       else if content instanceof String
         @fromString(content)
       if @content.length > 234
@@ -29,7 +29,7 @@ module.exports = fp((fastify, opts, next) ->
         "content": @content,
         "color": @color,
         "position": @position,
-        "time": @time
+        "offset": @offset
       })
 
     fromString: (json) =>
@@ -37,8 +37,8 @@ module.exports = fp((fastify, opts, next) ->
       @content = obj["content"]
       @color = obj["color"]
       @position = obj["position"]
-      if obj["time"]?
-        @time = obj["time"]
+      if obj["offset"]?
+        @time = obj["offset"]
 
   class Channel
     constructor: (name, desc, expireTime = null,
@@ -70,10 +70,11 @@ module.exports = fp((fastify, opts, next) ->
       return false
 
     pushDanmaku: (danmaku) =>
-      return @redis.zaddAsync(@channelKey, danmaku.time, danmaku.toString())
+      return @redis.zaddAsync(@channelKey,
+      danmaku["offset"], danmaku.toString())
 
-    getDanmakus: (time) =>
-      return @redis.zrangebyscoreAsync(@channelKey, time, Date.now())
+    getDanmakus: (offset) =>
+      return @redis.zrangebyscoreAsync(@channelKey, offset, Date.now())
 
     delete: () =>
       return @redis.delAsync(@channelKey)

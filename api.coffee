@@ -25,7 +25,7 @@ module.exports = (fastify, opts, next) ->
         return
       reply.send(c.toValue())
     catch err
-      reply.send(err)
+      reply.code(400).send(err)
       console.error(err)
   )
   fastify.post("/channel/:cname/danmaku", (request, reply) ->
@@ -57,10 +57,11 @@ module.exports = (fastify, opts, next) ->
       request.body["content"].match(blacklist)?
         reply.code(444).send(new Error("Blacklist Word"))
         return
-      await c.pushDanmaku(new Danmaku(request.body))
-      reply.send({ "status": "ok" })
+      status = await c.pushDanmaku(new Danmaku(request.body))
+      if (status == 1)
+        reply.send({ "status": "ok" })
     catch err
-      reply.send(err)
+      reply.code(400).send(err)
       console.error(err)
   )
   fastify.get("/channel/:cname/danmaku", (request, reply) ->
@@ -71,17 +72,17 @@ module.exports = (fastify, opts, next) ->
         .send(new Error("Channel #{request.params["cname"]} Not Found"))
         return
       # If no time offset given return danmakus in 10 minutes.
-      if not request.query["time"]?
-        request.query["time"] = Date.now() - 1 * 60 * 1000
+      if not request.query["offset"]?
+        request.query["offset"] = Date.now() - 1 * 60 * 1000
       if (not c.isOpen) and
       request.headers["x-danmaku-auth-key"] isnt c.password
         reply.code(403).send(new Error("Wrong password!"))
         return
-      danmakuStrs = await c.getDanmakus(request.query["time"])
+      danmakuStrs = await c.getDanmakus(request.query["offset"])
       danmakus = (JSON.parse(s) for s in danmakuStrs)
-      reply.send(danmakus)
+      reply.send({ "result": danmakus, "status": "ok"})
     catch err
-      reply.send(err)
+      reply.code(400).send(err)
       console.error(err)
   )
   next()

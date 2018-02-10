@@ -1,6 +1,6 @@
 {
   "name": "coffee-danmaku-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A danmaku server powered by Node, CoffeeScript and Fastify.",
   "main": "index.js",
   "scripts": {
