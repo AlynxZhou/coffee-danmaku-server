@@ -157,8 +157,11 @@ $(document).ready(function() {
       }
     });
   }
+  function escapeHTML(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") ;
+  }
   function createDom(dmk, i) {
-    var jqueryDom = $("<div class=\"danmaku\">" + dmk["content"] + "</div>");
+    var jqueryDom = $("<div class=\"danmaku\">" + escapeHTML(dmk["content"]) + "</div>");
     var css = {
       "white-space": "nowrap",
       "position": "absolute",
