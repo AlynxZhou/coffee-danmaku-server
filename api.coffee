@@ -72,7 +72,7 @@ module.exports = (fastify, opts, next) ->
         .send(new Error("Channel #{request.params["cname"]} Not Found"))
         return
       # If no time offset given return danmakus in 10 minutes.
-      if not request.query["offset"]?
+      if (not request.query["offset"]?) or request.query["offset"] > Date.now()
         request.query["offset"] = Date.now() - 1 * 60 * 1000
       if (not c.isOpen) and
       request.headers["x-danmaku-auth-key"] isnt c.password
