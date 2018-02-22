@@ -43,23 +43,152 @@ body {
 {% endblock %}
 
 {% block js %}
+<script type="text/javascript" src="/static/js/qrcode.min.js"></script>
 <script type="text/javascript">
-$(document).ready(function() {
-  // POST danmaku.
-  function showError(msg) {
-    $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
-    setTimeout(function () {
-      $("#error-container").empty();
-    }, 1000);
+function showError(msg) {
+  $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
+  setTimeout(function () {
+    $("#error-container").empty();
+  }, 1000);
+}
+function validate() {
+  var valid = true;
+  if ($("#content").val().trim().length === 0) {
+    showError("弹幕内容不能为空！");
+    valid = false;
   }
-  function validate() {
-    var valid = true;
-    if ($("#content").val().trim().length === 0) {
-      showError("弹幕内容不能为空！");
-      valid = false;
+  return valid;
+}
+var winHeight = $(window).height();
+var winWidth = $(window).width();
+var danmakus = [];
+var pollOffset = 0;
+var animateInterval = 10000;
+var pollInterval = 1000;
+var allocInterval = 500;
+var slotLength = 30;
+var fixedSlots = [];
+var flySlots = [];
+for (var i = 0; i < slotLength; ++i) {
+  fixedSlots.push(null);
+  flySlots.push(null);
+}
+var colorRGBA = {
+  "red": "rgba(255, 0, 0, 255)",
+  "green": "rgba(0, 255, 0, 255)",
+  "blue": "rgba(0, 0, 255, 255)",
+  "white": "rgba(255, 255, 255, 255)",
+  "yellow": "rgba(255, 255, 0, 255)",
+  "cyan": "rgba(0, 255, 255, 255)",
+  "purple": "rgba(128, 0, 128, 255)",
+  "black": "rgba(0, 0, 0, 255)"
+}
+function pollDanmakus() {
+  var url = "{{ apiDanmaku }}";
+  if (pollOffset > 0) {
+    url = url + "?offset=" + pollOffset
+  }
+  $.ajax({
+    "type": "GET",
+    "headers": { "X-Danmaku-Auth-Key": $("#password").val() },
+    "url": url,
+    "success": function (data) {
+      danmakus = danmakus.concat(data["result"]);
+      for (var i = 0; i < danmakus.length; ++i) {
+        if (danmakus[i]["offset"] > pollOffset) {
+          pollOffset = danmakus[i]["offset"] + 1;
+        }
+      }
+      setTimeout(pollDanmakus, pollInterval);
+    },
+    "statusCode": {
+      "403": function () {
+        // showError("密码错误，请重新输入！");
+        setTimeout(pollDanmakus, pollInterval);
+      },
+      "400": function () {
+        setTimeout(pollDanmakus, pollInterval);
+      }
     }
-    return valid;
+  });
+}
+function escapeHTML(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") ;
+}
+function createDom(dmk, i) {
+  var jqueryDom = $("<div class=\"danmaku\">" + escapeHTML(dmk["content"]) + "</div>");
+  var css = {
+    "white-space": "nowrap",
+    "position": "absolute",
+    "color": colorRGBA[dmk["color"]],
+    "font-size": winHeight / slotLength + "px",
+    "top": i * winHeight / slotLength +  "px",
+    "left": winWidth + "px"
+    // "-webkit-text-stroke": "1px black",
+    // "text-stroke": "1px black",
   }
+  if (dmk["color"] === "white" || dmk["color"] === "yellow" || dmk["color"] === "cyan" || dmk["color"] === "green") {
+    css["text-shadow"] = "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
+  }
+  jqueryDom.css(css);
+  $("body").append(jqueryDom);
+  if (dmk["position"] !== "fly") {
+    jqueryDom.css("left", winWidth / 2 - jqueryDom.width() / 2 + "px");
+  }
+  // Animate.
+  if (dmk["position"] === "fly") {
+    jqueryDom.animate({ "left": (-1 - jqueryDom.width()) + "px" }, animateInterval, function () { jqueryDom.remove(); });
+  } else {
+    setTimeout(function() {
+      jqueryDom.hide();
+    }, animateInterval);
+  }
+  return jqueryDom;
+}
+function deleteDanmakus() {
+  for (var i = 0; i < slotLength; ++i) {
+    if (fixedSlots[i] !== null && fixedSlots[i].css("display") === "none") {
+      fixedSlots[i].remove();
+      fixedSlots[i] = null;
+    }
+  }
+  for (var i = 0; i < slotLength; ++i) {
+    if (flySlots[i] !== null && flySlots[i].width() + flySlots[i].offset().left < winWidth) {
+      flySlots[i] = null;
+    }
+  }
+}
+function allocDanmakus() {
+  if (danmakus.length === 0) {
+    return;
+  }
+  if (danmakus[0]["position"] === "top") {
+    for (var i = 0; i < slotLength; ++i) {
+      if (fixedSlots[i] === null) {
+        fixedSlots[i] = createDom(danmakus.shift(), i);
+        break;
+      }
+    }
+  } else if (danmakus[0].position === "bottom") {
+    for (var i = slotLength - 1; i >= 0; --i) {
+      if (fixedSlots[i] === null) {
+        fixedSlots[i] = createDom(danmakus.shift(), i);
+        break;
+      }
+    }
+  } else if (danmakus[0].position === "fly") {
+    for (var i = slotLength / 3; i < slotLength + slotLength / 3; ++i) {
+      if (i >= slotLength) {
+        i %= slotLength;
+      }
+      if (flySlots[i] === null) {
+        flySlots[i] = createDom(danmakus.shift(), i);
+        break;
+      }
+    }
+  }
+}
+$(document).ready(function() {
   $("#form-danmaku").submit(function(event) {
     event.preventDefault();
     if (!validate()) {
@@ -68,7 +197,7 @@ $(document).ready(function() {
     $("#submit").attr("disabled", true);
     $.ajax({
       "type": "POST",
-      "url": "{{ apiCreateDanmaku }}",
+      "url": "{{ apiDanmaku }}",
       "dataType": "json",
       "headers": {
         "Content-Type": "application/json",
@@ -104,135 +233,6 @@ $(document).ready(function() {
     });
   });
   // GET danmakus and display them.
-  var winHeight = $(window).height();
-  var winWidth = $(window).width();
-  var danmakus = [];
-  var pollOffset = 0;
-  var animateInterval = 10000;
-  var pollInterval = 1000;
-  var allocInterval = 500;
-  var slotLength = 30;
-  var fixedSlots = [];
-  var flySlots = [];
-  for (var i = 0; i < slotLength; ++i) {
-    fixedSlots.push(null);
-    flySlots.push(null);
-  }
-  var colorRGBA = {
-    "red": "rgba(255, 0, 0, 255)",
-    "green": "rgba(0, 255, 0, 255)",
-    "blue": "rgba(0, 0, 255, 255)",
-    "white": "rgba(255, 255, 255, 255)",
-    "yellow": "rgba(255, 255, 0, 255)",
-    "cyan": "rgba(0, 255, 255, 255)",
-    "purple": "rgba(128, 0, 128, 255)",
-    "black": "rgba(0, 0, 0, 255)"
-  }
-  function pollDanmakus() {
-    var url = "/api/channel/{{ channel.name }}/danmaku";
-    if (pollOffset > 0) {
-      url = url + "?offset=" + pollOffset
-    }
-    $.ajax({
-      "type": "GET",
-      "headers": { "X-Danmaku-Auth-Key": $("#password").val() },
-      "url": url,
-      "success": function (data) {
-        danmakus = danmakus.concat(data["result"]);
-        for (var i = 0; i < danmakus.length; ++i) {
-          if (danmakus[i]["offset"] > pollOffset) {
-            pollOffset = danmakus[i]["offset"] + 1;
-          }
-        }
-        setTimeout(pollDanmakus, pollInterval);
-      },
-      "statusCode": {
-        "403": function () {
-          // showError("密码错误，请重新输入！");
-          setTimeout(pollDanmakus, pollInterval);
-        },
-        "400": function () {
-          setTimeout(pollDanmakus, pollInterval);
-        }
-      }
-    });
-  }
-  function escapeHTML(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") ;
-  }
-  function createDom(dmk, i) {
-    var jqueryDom = $("<div class=\"danmaku\">" + escapeHTML(dmk["content"]) + "</div>");
-    var css = {
-      "white-space": "nowrap",
-      "position": "absolute",
-      "color": colorRGBA[dmk["color"]],
-      "font-size": winHeight / slotLength + "px",
-      "top": i * winHeight / slotLength +  "px",
-      "left": winWidth + "px"
-      // "-webkit-text-stroke": "1px black",
-      // "text-stroke": "1px black",
-    }
-    if (dmk["color"] === "white" || dmk["color"] === "yellow" || dmk["color"] === "cyan" || dmk["color"] === "green") {
-      css["text-shadow"] = "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
-    }
-    jqueryDom.css(css);
-    $("body").append(jqueryDom);
-    if (dmk["position"] !== "fly") {
-      jqueryDom.css("left", winWidth / 2 - jqueryDom.width() / 2 + "px");
-    }
-    // Animate.
-    if (dmk["position"] === "fly") {
-      jqueryDom.animate({ "left": (-1 - jqueryDom.width()) + "px" }, animateInterval, function () { jqueryDom.remove(); });
-    } else {
-      setTimeout(function() {
-        jqueryDom.hide();
-      }, animateInterval);
-    }
-    return jqueryDom;
-  }
-  function deleteDanmakus() {
-    for (var i = 0; i < slotLength; ++i) {
-      if (fixedSlots[i] !== null && fixedSlots[i].css("display") === "none") {
-        fixedSlots[i].remove();
-        fixedSlots[i] = null;
-      }
-    }
-    for (var i = 0; i < slotLength; ++i) {
-      if (flySlots[i] !== null && flySlots[i].width() + flySlots[i].offset().left < winWidth) {
-        flySlots[i] = null;
-      }
-    }
-  }
-  function allocDanmakus() {
-    if (danmakus.length === 0) {
-      return;
-    }
-    if (danmakus[0]["position"] === "top") {
-      for (var i = 0; i < slotLength; ++i) {
-        if (fixedSlots[i] === null) {
-          fixedSlots[i] = createDom(danmakus.shift(), i);
-          break;
-        }
-      }
-    } else if (danmakus[0].position === "bottom") {
-      for (var i = slotLength - 1; i >= 0; --i) {
-        if (fixedSlots[i] === null) {
-          fixedSlots[i] = createDom(danmakus.shift(), i);
-          break;
-        }
-      }
-    } else if (danmakus[0].position === "fly") {
-      for (var i = slotLength / 3; i < slotLength + slotLength / 3; ++i) {
-        if (i >= slotLength) {
-          i %= slotLength;
-        }
-        if (flySlots[i] === null) {
-          flySlots[i] = createDom(danmakus.shift(), i);
-          break;
-        }
-      }
-    }
-  }
   pollDanmakus();
   setInterval(function () {
     winHeight = $(window).height();
@@ -248,16 +248,16 @@ $(document).ready(function() {
 
 {% block body %}
 <div class="row" id="danmaku-channel">
-  <div class="col-md-8 col-md-offset-2">
+  <div class="col-md-8">
     <h1>{{ channel.name }}</h1>
     <h2>{{ channel.desc }}</h2>
 
     <div id="error-container"></div>
 
     {# QR code #}
-    {# <div class="dropdown">
+    <div class="dropdown">
       <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-        <span class="glyphicon glyphicon-qrcode"></span>
+        <i class="fa fa-qrcode"></i>
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
@@ -266,10 +266,8 @@ $(document).ready(function() {
           <script type="text/javascript">new QRCode(document.getElementById("qrcode"), document.URL);</script>
         </li>
       </ul>
-    </div> #}
-    {# <div id="token">{{ token }}</div> #}
+    </div>
 
-    {# danmaku form #}
     <form id="form-danmaku" class="form-horizontal" role="form">
       <div class="form-group" id="position-selection">
         <label for="position">弹幕位置</label>
@@ -328,7 +326,7 @@ $(document).ready(function() {
         <input autocomplete="off" type="password" class="form-control" id="password" name="password" placeholder="在这里填写频道密码（如果有）">
       </div>
       <div class="form-group">
-        <label for="danmaku">弹幕内容</label>
+        <label for="content">弹幕内容</label>
         <input type="text" class="form-control" name="content" autocomplete="off" id="content" placeholder="在这里发射弹幕">
       </div>
       <input type="submit" id="submit" class="btn btn-success" value="发射">

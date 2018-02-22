@@ -4,8 +4,8 @@ module.exports = (fastify, opts, next) ->
   { channelManager } = fastify
   if process.platform is "win32"
     require("readline").createInterface({
-      input: process.stdin,
-      output: process.stdout
+      "input": process.stdin,
+      "output": process.stdout
     }).on("SIGINT", () ->
       process.emit("SIGINT")
     )

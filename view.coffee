@@ -41,24 +41,26 @@ module.exports = (fastify, opts, next) ->
     nunjucks.render("channel.njk",
     {
       "channel": c,
-      "apiCreateDanmaku": "/api/channel/#{cname}/danmaku"
+      "apiDanmaku": "/api/channel/#{cname}/danmaku"
     }, (err, result) ->
       if err
         reply.send(err)
       reply.header("Content-Type", "text/html").send(result)
     )
   )
-  fastify.get("/test", (request, reply) ->
-    reply.send({ "test": true })
-  )
-  fastify.get("/*", (request, reply) ->
-    sendStream = send(request.req, request.params["*"])
-    sendStream.on("error", (err) ->
-      if err.status is 404
-        reply.notFound()
-      else
+  fastify.get("/channel/:cname/exam", (request, reply) ->
+    cname = request.params["cname"]
+    c = channelManager.getChannelByName(cname)
+    if c?
+      c = c.toValue()
+    nunjucks.render("exam-channel.njk",
+    {
+      "channel": c,
+      "apiExamination": "/api/channel/#{cname}/examination"
+    }, (err, result) ->
+      if err
         reply.send(err)
+      reply.header("Content-Type", "text/html").send(result)
     )
-    sendStream.pipe(reply.res)
   )
   next()

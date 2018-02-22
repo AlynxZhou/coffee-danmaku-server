@@ -1,8 +1,13 @@
+path = require("path")
 Fastify = require("fastify")
 
 fastify = new Fastify()
 
-fastify.register(require("fastify-redis"), { host: "127.0.0.1" }, (err) ->
+fastify.register(require("fastify-static"), {
+  "root": path.join(__dirname, "/static"),
+  "prefix": "/static"
+})
+fastify.register(require("fastify-redis"), { "host": "127.0.0.1" }, (err) ->
   if err
     throw err
 )

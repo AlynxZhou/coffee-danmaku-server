@@ -19,12 +19,18 @@
         <thead>
           <th>名称</th>
           <th>描述</th>
+          <th>操作</th>
         </thead>
         <tbody>
-          {%- for chan in channels %}
+          {% for chan in channels %}
           <tr>
-            <td><a href="{{ chan.url }}">{% if not chan.isOpen %}<i class="fa fa-lock"></i>{% endif %} {% if chan.useBlacklist %}<i class="fa fa-black-tie"></i>{% endif %} {{ chan.name }}</a> </td>
+            <td>{% if not chan.isOpen %}<i class="fa fa-lock"></i>{% endif %} {% if chan.useBlacklist %}<i class="fa fa-black-tie"></i>{% endif %} <a href="{{ chan.url }}">{{ chan.name }}</a> </td>
             <td>{{ chan.desc }}</td>
+            <td>
+              {% if chan.isExam %}
+              <a href="/channel/{{ chan.name }}/exam">审核</a>
+              {% endif %}
+            </td>
           </tr>
           {% endfor -%}
         </tbody>

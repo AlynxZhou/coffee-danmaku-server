@@ -10,26 +10,26 @@ body {
 
 {% block js %}
 <script type="text/javascript">
-$(document).ready(function() {
-  function showError(msg) {
-    $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
-    setTimeout(function () {
-      $("#error-container").empty();
-    }, 5000);
+function showError(msg) {
+  $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
+  setTimeout(function () {
+    $("#error-container").empty();
+  }, 5000);
+}
+function validate() {
+  var valid = true;
+  var namer = /^[a-zA-Z][a-zA-Z0-9_\-]{1,}$/;
+  if (!$("#name").val().match(namer)) {
+    showError("频道名称有误！");
+    valid = false;
   }
-  function validate() {
-    var valid = true;
-    var namer = /^[a-zA-Z][a-zA-Z0-9_\-]{1,}$/;
-    if (!$("#name").val().match(namer)) {
-      showError("频道名称有误！");
-      valid = false;
-    }
-    if ($("#desc").val().trim().length === 0) {
-      showError("频道说明必填！");
-      valid = false;
-    }
-    return valid;
-  };
+  if ($("#desc").val().trim().length === 0) {
+    showError("频道说明必填！");
+    valid = false;
+  }
+  return valid;
+}
+$(document).ready(function() {
   $("#form-channel").submit(function(event) {
     event.preventDefault();
     if (!validate()) {
@@ -46,7 +46,8 @@ $(document).ready(function() {
         "desc": $("#desc").val().trim(),
         "expireTime": parseInt($("form input[name=ttl]:checked").val()) * 60 * 60 * 1000 + Date.now(),
         "password": $("#password").val(),
-        "useBlacklist": $("form input[name=useBlacklist]").val() == "true"
+        "examPassword": $("#examPassword").val(),
+        "useBlacklist": $("form input[name=useBlacklist]").prop("checked")
       }),
       "success": function(data) {
         $("#submit").attr("disabled", false);
@@ -66,68 +67,75 @@ $(document).ready(function() {
 
 {% block body %}
 <div class="row">
-  <div class="col-md-8 col-md-offset-2">
-    <h2>新建频道</h2>
-    <div>
-      <div id="error-container"></div>
-      <div class="alert alert-info">
-        <p><strong>注意:</strong></p>
-        <ul>
-          <li>频道名称只能含有字母、数字、连字符和下划线，并且必须以字母开头。</li>
-        </ul>
-      </div>
-      <form id="form-channel" class="form-horizontal" role="form">
-        <div class="form-group">
-          <label for="name" class="col-sm-2 control-label">频道名称</label>
-          <div class="col-sm-10">
-            <input autocomplete="off" type="text" class="form-control" name="name" id="name" placeholder="频道名称：字母、数字、连字符和下划线">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="desc" class="col-sm-2 control-label">频道描述</label>
-          <div class="col-sm-10">
-            <input autocomplete="off" type="text" class="form-control" id="desc" name="desc" placeholder="频道描述">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="passwd" class="col-sm-2 control-label">频道密码</label>
-          <div class="col-sm-10">
-            <input autocomplete="off" type="password" class="form-control" id="password" name="password" placeholder="输入频道密码（可选）">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="useBlacklist" class="col-sm-2 control-label">使用黑名单屏蔽不良词汇</label>
-          <div class="col-sm-10">
-            <input type="checkbox" class="form-control" id="useBlacklist" name="useBlacklist" value="true" checked>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="ttl" class="col-sm-2 control-label">过期时间</label>
-          <div class="col-sm-10" id="ttl-selection">
-            <label class="radio-inline">
-              <input type="radio" name="ttl" value="1" checked> 1 小时
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="ttl" value="2"> 2 小时
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="ttl" value="3"> 3 小时
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="ttl" value="5"> 5 小时
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="ttl" value="12"> 12 小时
-            </label>
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="col-sm-12">
-            <input type="submit" id="submit" class="btn btn-success" value="提交">
-          </div>
-        </div>
-      </form>
+  <div class="col-md-8">
+    <h1>新建频道</h1>
+
+    <div id="error-container"></div>
+
+    <div class="alert alert-info">
+      <p><strong>注意:</strong></p>
+      <ul>
+        <li>频道名称只能含有字母、数字、连字符和下划线，并且必须以字母开头。</li>
+      </ul>
     </div>
+
+    <form id="form-channel" class="form-horizontal" role="form">
+      <div class="form-group">
+        <label for="name" class="col-sm-2 control-label">频道名称</label>
+        <div class="col-sm-10">
+          <input autocomplete="off" type="text" class="form-control" name="name" id="name" placeholder="频道名称：字母、数字、连字符和下划线">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="desc" class="col-sm-2 control-label">频道描述</label>
+        <div class="col-sm-10">
+          <input autocomplete="off" type="text" class="form-control" id="desc" name="desc" placeholder="频道描述">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password" class="col-sm-2 control-label">频道密码</label>
+        <div class="col-sm-10">
+          <input autocomplete="off" type="password" class="form-control" id="password" name="password" placeholder="输入频道密码（可选）">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="examPassword" class="col-sm-2 control-label">审核密码</label>
+        <div class="col-sm-10">
+          <input autocomplete="off" type="password" class="form-control" id="examPassword" name="examPassword" placeholder="输入审核密码（可选）">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="useBlacklist" class="col-sm-2 control-label">不良词汇过滤</label>
+        <div class="col-sm-10">
+          <input type="checkbox" class="form-control" id="useBlacklist" name="useBlacklist" value="true" checked>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="ttl" class="col-sm-2 control-label">过期时间</label>
+        <div class="col-sm-10" id="ttl-selection">
+          <label class="radio-inline">
+            <input type="radio" name="ttl" value="1" checked> 1 小时
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="ttl" value="2"> 2 小时
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="ttl" value="3"> 3 小时
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="ttl" value="5"> 5 小时
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="ttl" value="12"> 12 小时
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-12">
+          <input type="submit" id="submit" class="btn btn-success" value="提交">
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}

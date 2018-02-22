@@ -26,11 +26,11 @@
   "homepage": "https://github.com/AlynxZhou/coffee-danmaku-server#readme",
   "dependencies": {
     "bluebird": "^3.5.1",
-    "coffeescript": "^2.1.1",
-    "fastify": "^0.40.0",
-    "fastify-plugin": "^0.2.1",
+    "coffeescript": "^2.2.1",
+    "fastify": "^0.42.0",
+    "fastify-plugin": "^0.2.2",
     "fastify-redis": "^0.4.0",
-    "nunjucks": "^3.0.1",
-    "send": "^0.16.1"
+    "fastify-static": "^0.8.0",
+    "nunjucks": "^3.1.0"
   }
 }

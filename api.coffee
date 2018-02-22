@@ -5,11 +5,15 @@ module.exports = (fastify, opts, next) ->
       reply.code(403).send(new Error("Channel #{request.body["name"]} Exists"))
       return
     isOpen = true
-    if request.body["password"]?
+    if request.body["password"]? and request.body["password"].length isnt 0
       isOpen = false
+    if request.body["examPassword"]? and
+    request.body["examPassword"].length isnt 0
+      isExam = true
     c = new Channel(request.body["name"], request.body["desc"],
-    request.body["expireTime"], isOpen, request.body["password"],
-    request.body["useBlacklist"])
+    request.body["expireTime"], isOpen,
+    request.body["password"], isExam,
+    request.body["examPassword"], request.body["useBlacklist"])
     channelManager.addChannel(c)
     reply.send({ "url": c.url })
   )
@@ -57,8 +61,11 @@ module.exports = (fastify, opts, next) ->
       request.body["content"].match(blacklist)?
         reply.code(444).send(new Error("Blacklist Word"))
         return
-      status = await c.pushDanmaku(new Danmaku(request.body))
-      if (status == 1)
+      if c.isExam
+        status = c.pushExamDanmaku(new Danmaku(request.body))
+      else
+        status = await c.pushDanmaku(new Danmaku(request.body))
+      if status is 1
         reply.send({ "status": "ok" })
     catch err
       reply.code(400).send(err)
@@ -80,6 +87,54 @@ module.exports = (fastify, opts, next) ->
         return
       danmakuStrs = await c.getDanmakus(request.query["offset"])
       danmakus = (JSON.parse(s) for s in danmakuStrs)
+      reply.send({ "result": danmakus, "status": "ok"})
+    catch err
+      reply.code(400).send(err)
+      console.error(err)
+  )
+  fastify.post("/channel/:cname/examination", (request, reply) ->
+    try
+      c = channelManager.getChannelByName(request.params["cname"])
+      if not c?
+        reply.code(404)
+        .send(new Error("Channel #{request.params["cname"]} Not Found"))
+        return
+      if not c.isExam
+        reply.code(400)
+        .send(
+          new Error( "Channel #{request.params["cname"]} has no examination")
+        )
+        return
+      if c.isExam and request.headers["x-danmaku-exam-key"] isnt c.examPassword
+        reply.code(403).send(new Error("Wrong Password"))
+        return
+      if request.body["content"].length is 0
+        reply.send(new Error("Empty Danmaku"))
+        return
+      status = await c.pushDanmaku(new Danmaku(request.body))
+      if (status == 1)
+        reply.send({ "status": "ok" })
+    catch err
+      reply.code(400).send(err)
+      console.error(err)
+  )
+  fastify.get("/channel/:cname/examination", (request, reply) ->
+    try
+      c = channelManager.getChannelByName(request.params["cname"])
+      if not c?
+        reply.code(404)
+        .send(new Error("Channel #{request.params["cname"]} Not Found"))
+        return
+      if not c.isExam
+        reply.code(403)
+        .send(
+          new Error( "Channel #{request.params["cname"]} has no examination")
+        )
+        return
+      if c.isExam and request.headers["x-danmaku-exam-key"] isnt c.examPassword
+        reply.code(403).send(new Error("Wrong Password"))
+        return
+      danmakus = c.getExamDanmakus()
       reply.send({ "result": danmakus, "status": "ok"})
     catch err
       reply.code(400).send(err)

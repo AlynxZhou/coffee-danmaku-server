@@ -42,17 +42,21 @@ module.exports = fp((fastify, opts, next) ->
 
   class Channel
     constructor: (name, desc, expireTime = null,
-    isOpen = true, password = null, useBlacklist = false) ->
+    isOpen = true, password = null, isExam = false,
+    examPassword = null, useBlacklist = false) ->
       @redis = redis
       @name = name
       @desc = desc
       @expireTime = expireTime
       @isOpen = isOpen
       @password = password
+      @isExam = isExam
+      @examPassword = examPassword
       @useBlacklist = useBlacklist
       @url = "/channel/#{@name}"
       @channelKey = "channel_#{@name}"
       @ipTime = {}
+      @examDanmakus = []
 
     toValue: () =>
       return {
@@ -60,6 +64,7 @@ module.exports = fp((fastify, opts, next) ->
         "desc": @desc,
         "expireTime": @expireTime,
         "isOpen": @isOpen,
+        "isExam": @isExam,
         "url": @url,
         "useBlacklist": @useBlacklist
       }
@@ -75,6 +80,15 @@ module.exports = fp((fastify, opts, next) ->
 
     getDanmakus: (offset) =>
       return @redis.zrangebyscoreAsync(@channelKey, offset, Date.now())
+
+    pushExamDanmaku: (danmaku) =>
+      @examDanmakus.push(danmaku)
+      return 1
+
+    getExamDanmakus: () =>
+      edmks = @examDanmakus
+      @examDanmakus = []
+      return edmks
 
     delete: () =>
       return @redis.delAsync(@channelKey)
@@ -117,6 +131,8 @@ module.exports = fp((fastify, opts, next) ->
           "expireTime": c.expireTime,
           "isOpen": c.isOpen,
           "password": c.password,
+          "isExam": c.isExam,
+          "examPassword": c.examPassword,
           "useBlacklist": c.useBlacklist
         })
       return JSON.stringify({ "channels": tmp }, null, "  ")
@@ -128,7 +144,7 @@ module.exports = fp((fastify, opts, next) ->
       @channels = []
       for c in tmp
         @addChannel(new Channel(c.name, c.desc, c.expireTime,
-        c.isOpen, c.password, c.useBlacklist))
+        c.isOpen, c.password, c.isExam, c.examPassword, c.useBlacklist))
       if not @getChannelByName("demo")?
         @addChannel(new Channel("demo", "test"))
 
