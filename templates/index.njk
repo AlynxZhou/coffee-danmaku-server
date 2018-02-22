@@ -12,8 +12,8 @@
 
 {% block body %}
 <div class="row">
-  <div class="col-md-8 col-md-offset-2">
-    <h2>频道列表</h2>
+  <div class="col-md-8">
+    <h1>频道列表</h1>
     <div>
       <table class="table table-responsive">
         <thead>
@@ -24,7 +24,7 @@
         <tbody>
           {% for chan in channels %}
           <tr>
-            <td>{% if not chan.isOpen %}<i class="fa fa-lock"></i>{% endif %} {% if chan.useBlacklist %}<i class="fa fa-black-tie"></i>{% endif %} <a href="{{ chan.url }}">{{ chan.name }}</a> </td>
+            <td>{% if not chan.isOpen %}<i class="fa fa-lock"></i> {% endif %}{% if chan.useBlacklist %}<i class="fa fa-black-tie"></i> {% endif %}<a href="{{ chan.url }}">{{ chan.name }}</a> </td>
             <td>{{ chan.desc }}</td>
             <td>
               {% if chan.isExam %}
@@ -32,7 +32,7 @@
               {% endif %}
             </td>
           </tr>
-          {% endfor -%}
+          {% endfor %}
         </tbody>
       </table>
       <a class="btn btn-success" href="{{ createChannel }}">新建频道</a>
