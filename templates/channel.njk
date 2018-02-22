@@ -254,7 +254,7 @@ $(document).ready(function() {
 
     <div id="error-container"></div>
 
-    {# QR code #}
+    <!-- QR code -->
     <div class="dropdown">
       <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
         <i class="fa fa-qrcode"></i>
@@ -270,8 +270,8 @@ $(document).ready(function() {
 
     <form id="form-danmaku" class="form-horizontal" role="form">
       <div class="form-group" id="position-selection">
-        <label for="position">弹幕位置</label>
-        <div>
+        <label for="position" class="col-sm-2 control-label">弹幕位置</label>
+        <div class="col-sm-10">
           <label class="radio-inline">
             <input type="radio" name="position" value="fly" checked> 飞过
           </label>
@@ -285,8 +285,8 @@ $(document).ready(function() {
       </div>
 
       <div class="form-group" id="color-selection">
-        <label for="color">弹幕颜色</label>
-        <div>
+        <label for="color" class="col-sm-2 control-label">弹幕颜色</label>
+        <div class="col-sm-10">
           <label class="radio-inline">
             <input type="radio" name="color" value="white" checked>
             <span class="label label-white">白色</span>
@@ -322,14 +322,22 @@ $(document).ready(function() {
         </div>
       </div>
       <div class="form-group">
-        <label for="password" class="control-label">频道密码（如果有）</label>
-        <input autocomplete="off" type="password" class="form-control" id="password" name="password" placeholder="在这里填写频道密码（如果有）">
+        <label for="password" class="col-sm-2 control-label">频道密码）</label>
+        <div class="col-sm-10">
+          <input autocomplete="off" type="password" class="form-control" id="password" name="password" placeholder="在这里填写频道密码（如果有）">
+        </div>
       </div>
       <div class="form-group">
-        <label for="content">弹幕内容</label>
-        <input type="text" class="form-control" name="content" autocomplete="off" id="content" placeholder="在这里发射弹幕">
+        <label for="content" class="col-sm-2 control-label">弹幕内容</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" name="content" autocomplete="off" id="content" placeholder="在这里发射弹幕">
+        </div>
       </div>
-      <input type="submit" id="submit" class="btn btn-success" value="发射">
+      <div class="form-group">
+        <div class="col-sm-12">
+          <input type="submit" id="submit" class="btn btn-success" value="发射">
+        </div>
+      </div>
     </form>
   </div>
 </div>

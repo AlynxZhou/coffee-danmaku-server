@@ -78,6 +78,7 @@ function buildExamTable() {
     innerHTML += "</td>";
     innerHTML += "<td class=\"col-md-4\">";
     innerHTML += "<button class=\"btn btn-success\" onclick=\"passDanmakuByID(" + i + ");\" id=\"passButton" + i + "\">通过</button>";
+    innerHTML += " ";
     innerHTML += "<button class=\"btn btn-danger\" onclick=\"blockDanmakuByID(" + i + ");\" id=\"blockButton" + i + "\">丢弃</button>";
     innerHTML += "</td>"
     innerHTML += "</tr>";
@@ -124,18 +125,20 @@ $(document).ready(function() {
 </script>
 {% endblock %}
 
-{% block title %}{{channel.name}} 弹幕审核{% endblock %}
+{% block title %}{{ channel.name }} 弹幕审核{% endblock %}
 
 {% block body %}
-<div class="row" id="danmaku-exam">
+<div class="row" id="exam-channel">
   <div class="col-md-8">
-    <h1>{{channel.name}} 弹幕审核</h1>
+    <h1>{{ channel.name }} 弹幕审核</h1>
     <h2>{{ channel.desc }}</h2>
 
-    <form id="form-exam" class="form-inline" role="form">
+    <form id="form-exam" class="form-horizontal" role="form">
       <div class="form-group">
-        <label for="examPassword">审核密码</label>
-        <input type="password" class="form-control" id="examPassword" name="examPassword" placeholder="输入审核密码">
+        <label for="examPassword" class="col-sm-2 control-label">审核密码</label>
+        <div class="col-sm-10">
+          <input type="password" class="form-control" id="examPassword" name="examPassword" placeholder="在这里填写审核密码（如果有）">
+        </div>
       </div>
     </form>
 
