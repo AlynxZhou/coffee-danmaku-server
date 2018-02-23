@@ -66,7 +66,8 @@ function escapeHTML(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") ;
 }
 function buildExamTable() {
-  $("#examTable").empty().append("<div class=\"sk-wave\"><div class=\"sk-rect sk-rect1\"></div> <div class=\"sk-rect sk-rect2\"></div> <div class=\"sk-rect sk-rect3\"></div> <div class=\"sk-rect sk-rect4\"></div> <div class=\"sk-rect sk-rect5\"></div></div>");
+  $("#examTable").empty();
+  $("#sk-wave").show();
   if (examList.length === 0) {
     return
   }
@@ -83,8 +84,9 @@ function buildExamTable() {
     innerHTML += "</td>"
     innerHTML += "</tr>";
   }
-  innerHTML += "</tbody></table>"
-  $("#examTable").empty().append(innerHTML);
+  innerHTML += "</tbody></table>";
+  $("#examTable").append(innerHTML);
+  $("#sk-wave").hide();
 }
 function pollDanmakus() {
   $.ajax({
@@ -149,15 +151,14 @@ $(document).ready(function() {
       <h4>快捷键：回车通过第一条弹幕，删除/退格键丢弃第一条弹幕。</h4>
     </div>
 
-    <div id="examTable">
-      <div class="sk-wave">
-        <div class="sk-rect sk-rect1"></div>
-        <div class="sk-rect sk-rect2"></div>
-        <div class="sk-rect sk-rect3"></div>
-        <div class="sk-rect sk-rect4"></div>
-        <div class="sk-rect sk-rect5"></div>
-      </div>
+    <div class="sk-wave" id="sk-wave">
+      <div class="sk-rect sk-rect1"></div>
+      <div class="sk-rect sk-rect2"></div>
+      <div class="sk-rect sk-rect3"></div>
+      <div class="sk-rect sk-rect4"></div>
+      <div class="sk-rect sk-rect5"></div>
     </div>
+    <div id="examTable"></div>
   </div>
 </div>
 {% endblock %}
