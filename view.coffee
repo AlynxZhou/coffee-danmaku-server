@@ -38,6 +38,10 @@ module.exports = (fastify, opts, next) ->
     c = channelManager.getChannelByName(cname)
     if c?
       c = c.toValue()
+    else
+      reply.code(404)
+      .send(new Error("Channel #{request.params["cname"]} Not Found"))
+      return
     nunjucks.render("channel.njk",
     {
       "channel": c,
@@ -53,6 +57,10 @@ module.exports = (fastify, opts, next) ->
     c = channelManager.getChannelByName(cname)
     if c?
       c = c.toValue()
+    else
+      reply.code(404)
+      .send(new Error("Channel #{request.params["cname"]} has no examination"))
+      return
     nunjucks.render("exam-channel.njk",
     {
       "channel": c,
