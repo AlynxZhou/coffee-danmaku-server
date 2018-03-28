@@ -340,12 +340,14 @@ $(document).ready(function() {
           </label>
         </div>
       </div>
+      {% if not c.isOpen %}
       <div class="form-group">
         <label for="password" class="col-sm-2 control-label">频道密码</label>
         <div class="col-sm-10">
           <input autocomplete="off" type="password" class="form-control" id="password" name="password" placeholder="在这里填写频道密码（如果有）">
         </div>
       </div>
+      {% endif %}
       <div class="form-group">
         <label for="content" class="col-sm-2 control-label">弹幕内容</label>
         <div class="col-sm-10">
