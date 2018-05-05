@@ -1,7 +1,8 @@
 fs = require("fs")
 
 module.exports = (fastify, opts, next) ->
-  { channelManager } = fastify
+  {channelManager} = fastify
+
   if process.platform is "win32"
     require("readline").createInterface({
       "input": process.stdin,
@@ -22,4 +23,5 @@ module.exports = (fastify, opts, next) ->
     else
       channelManager.fromString(result)
   )
+
   next()

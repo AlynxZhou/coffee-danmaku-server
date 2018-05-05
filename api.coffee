@@ -1,6 +1,16 @@
 module.exports = (fastify, opts, next) ->
-  { channelManager, Channel, Danmaku, blacklist } = fastify
-  fastify.post("/channel", (request, reply) ->
+  {channelManager, Channel, Danmaku, blacklist} = fastify
+
+  fastify.post("/channel", {
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "url": {"type": "string"}
+        }
+      }
+    }
+  }, (request, reply) ->
     if channelManager.getChannelByName(request.body["name"])?
       reply.code(403).send(new Error("Channel #{request.body["name"]} Exists"))
       return
@@ -15,24 +25,81 @@ module.exports = (fastify, opts, next) ->
     request.body["password"], isExam,
     request.body["examPassword"], request.body["useBlacklist"])
     channelManager.addChannel(c)
-    reply.send({ "url": c.url })
+    reply.send({"url": c.url})
   )
-  fastify.get("/channel", (request, reply) ->
-    reply.send(channelManager.listChannelValue())
+
+  fastify.get("/channel", {
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": "string",
+                "desc": "string",
+                "expireTime": "integer",
+                "isOpen": "boolean",
+                "isExam": "boolean",
+                "url": "string",
+                "useBlacklist": "boolean"
+              }
+            }
+          },
+          "status": {"type": "string"}
+        }
+      }
+    }
+  }, (request, reply) ->
+    reply.send({"result": channelManager.listChannelValue(), "status": "ok"})
   )
-  fastify.get("/channel/:cname", (request, reply) ->
+
+  fastify.get("/channel/:cname", {
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "object",
+            "properties": {
+              "name": "string",
+              "desc": "string",
+              "expireTime": "integer",
+              "isOpen": "boolean",
+              "isExam": "boolean",
+              "url": "string",
+              "useBlacklist": "boolean"
+            }
+          },
+          "status": {"type": "string"}
+        }
+      }
+    }
+  }, (request, reply) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
         reply.code(404)
         .send(new Error("Channel #{request.params["cname"]} Not Found"))
         return
-      reply.send(c.toValue())
+      reply.send({"result": c.toValue(), "status": "ok"})
     catch err
       reply.code(400).send(err)
       console.error(err)
   )
-  fastify.post("/channel/:cname/danmaku", (request, reply) ->
+
+  fastify.post("/channel/:cname/danmaku", {
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string"}
+        }
+      }
+    }
+  }, (request, reply) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
@@ -66,12 +133,34 @@ module.exports = (fastify, opts, next) ->
       else
         status = await c.pushDanmaku(new Danmaku(request.body))
       if status is 1
-        reply.send({ "status": "ok" })
+        reply.send({"status": "ok"})
     catch err
       reply.code(400).send(err)
       console.error(err)
   )
-  fastify.get("/channel/:cname/danmaku", (request, reply) ->
+
+  fastify.get("/channel/:cname/danmaku", {
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "content": "string",
+                "color": "string",
+                "position": "string",
+                "offset": "integer"
+              }
+            }
+          },
+          "status": {"type": "string"}
+        }
+      }
+    }
+  }, (request, reply) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
@@ -87,12 +176,22 @@ module.exports = (fastify, opts, next) ->
         return
       danmakuStrs = await c.getDanmakus(request.query["offset"])
       danmakus = (JSON.parse(s) for s in danmakuStrs)
-      reply.send({ "result": danmakus, "status": "ok"})
+      reply.send({"result": danmakus, "status": "ok"})
     catch err
       reply.code(400).send(err)
       console.error(err)
   )
-  fastify.post("/channel/:cname/examination", (request, reply) ->
+
+  fastify.post("/channel/:cname/examination", {
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string"}
+        }
+      }
+    }
+  }, (request, reply) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
@@ -113,12 +212,34 @@ module.exports = (fastify, opts, next) ->
         return
       status = await c.pushDanmaku(new Danmaku(request.body))
       if (status == 1)
-        reply.send({ "status": "ok" })
+        reply.send({"status": "ok"})
     catch err
       reply.code(400).send(err)
       console.error(err)
   )
-  fastify.get("/channel/:cname/examination", (request, reply) ->
+
+  fastify.get("/channel/:cname/examination", {
+    "response": {
+      "200": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "content": "string",
+                "color": "string",
+                "position": "string",
+                "offset": "integer"
+              }
+            }
+          },
+          "status": {"type": "string"}
+        }
+      }
+    }
+  }, (request, reply) ->
     try
       c = channelManager.getChannelByName(request.params["cname"])
       if not c?
@@ -135,9 +256,10 @@ module.exports = (fastify, opts, next) ->
         reply.code(403).send(new Error("Wrong Password"))
         return
       danmakus = c.getExamDanmakus()
-      reply.send({ "result": danmakus, "status": "ok"})
+      reply.send({"result": danmakus, "status": "ok"})
     catch err
       reply.code(400).send(err)
       console.error(err)
   )
+
   next()

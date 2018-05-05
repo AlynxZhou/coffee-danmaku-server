@@ -3,7 +3,7 @@ Promise = require("bluebird")
 fp = require("fastify-plugin")
 
 module.exports = fp((fastify, opts, next) ->
-  { redis } = fastify
+  {redis} = fastify
   Promise.promisifyAll(redis)
 
   class Danmaku
@@ -135,7 +135,7 @@ module.exports = fp((fastify, opts, next) ->
           "examPassword": c.examPassword,
           "useBlacklist": c.useBlacklist
         })
-      return JSON.stringify({ "channels": tmp }, null, "  ")
+      return JSON.stringify({"channels": tmp}, null, "  ")
 
     fromString: (json) =>
       tmp = JSON.parse(json)["channels"]
@@ -157,6 +157,7 @@ module.exports = fp((fastify, opts, next) ->
     else
       blacklist = new RegExp(result)
       fastify.decorate("blacklist", blacklist)
+
     next()
   )
 )

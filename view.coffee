@@ -2,7 +2,8 @@ nunjucks = require("nunjucks").configure("templates")
 send = require("send")
 
 module.exports = (fastify, opts, next) ->
-  { channelManager, Channel, Danmaku } = fastify
+  {channelManager, Channel, Danmaku} = fastify
+
   fastify.get("/", (request, reply) ->
     nunjucks.render("index.njk",
     {
@@ -14,6 +15,7 @@ module.exports = (fastify, opts, next) ->
       reply.header("Content-Type", "text/html").send(res)
     )
   )
+
   fastify.get("/index*", (request, reply) ->
     nunjucks.render("index.njk",
     {
@@ -25,14 +27,16 @@ module.exports = (fastify, opts, next) ->
       reply.header("Content-Type", "text/html").send(res)
     )
   )
+
   fastify.get("/channel/create", (request, reply) ->
     nunjucks.render("create-channel.njk",
-    { "apiCreateChannel": "/api/channel" }, (err, res) ->
+    {"apiCreateChannel": "/api/channel"}, (err, res) ->
       if err
         reply.send(err)
       reply.header("Content-Type", "text/html").send(res)
     )
   )
+
   fastify.get("/channel/:cname", (request, reply) ->
     cname = request.params["cname"]
     c = channelManager.getChannelByName(cname)
@@ -52,6 +56,7 @@ module.exports = (fastify, opts, next) ->
       reply.header("Content-Type", "text/html").send(result)
     )
   )
+
   fastify.get("/channel/:cname/exam", (request, reply) ->
     cname = request.params["cname"]
     c = channelManager.getChannelByName(cname)
@@ -71,4 +76,5 @@ module.exports = (fastify, opts, next) ->
       reply.header("Content-Type", "text/html").send(result)
     )
   )
+
   next()
