@@ -1,7 +1,7 @@
 path = require("path")
 Fastify = require("fastify")
 
-fastify = new Fastify()
+fastify = new Fastify({"logger": true})
 
 fastify.register(require("fastify-static"), {
   "root": path.join(__dirname, "/static"),
