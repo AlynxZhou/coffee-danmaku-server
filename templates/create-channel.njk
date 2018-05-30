@@ -10,8 +10,11 @@ body {
 
 {% block js %}
 <script type="text/javascript">
+function escapeHTML (s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
 function showError(msg) {
-  $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
+  $("#error-container").html(escapeHTML("<div class=\"alert alert-danger\">" + msg + "</div>"));
   setTimeout(function () {
     $("#error-container").empty();
   }, 5000);

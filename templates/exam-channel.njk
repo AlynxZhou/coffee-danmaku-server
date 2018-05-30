@@ -8,8 +8,11 @@
 <script type="text/javascript">
 var examList = [];
 var pollInterval = 1000;
+function escapeHTML (s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
 function showError(msg) {
-  $("#error-container").html("<div class=\"alert alert-danger\">" + msg + "</div>");
+  $("#error-container").html(escapeHTML("<div class=\"alert alert-danger\">" + msg + "</div>"));
   setTimeout(function () {
     $("#error-container").empty();
   }, 1000);
@@ -18,7 +21,7 @@ function passDanmakuByID(i) {
   if (examList.length === 0) {
     return
   }
-  danmaku = examList[i];
+  var danmaku = examList[i];
   $("#passButton" + i).attr("disabled", true);
   $("#blockButton" + i).attr("disabled", true);
   $.ajax({
@@ -61,9 +64,6 @@ function blockDanmakuByID(i) {
   }
   examList.splice(i, 1);
   buildExamTable();
-}
-function escapeHTML(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") ;
 }
 function buildExamTable() {
   $("#examTable").empty();
